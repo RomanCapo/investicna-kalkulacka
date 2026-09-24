@@ -23,6 +23,18 @@ Jednoduchá single-page kalkulačka (React cez CDN + Tailwind CSS, žiadny build
 - Graf portfólia počas sporenia aj výplaty (v dnešných cenách alebo nominálne), ročný prehľad
 - Export prehľadu do PDF
 
+## Životná kalkulačka
+
+`zivotna-kalkulacka.html` — minimálne odporúčané poistné sumy životného poistenia v rovnakom dizajne.
+
+- Čistý príjem vypočítaný z hrubej mzdy (dá sa prepísať), suma úverov, vek a odpracované roky
+- Dávky Sociálnej poisťovne: nemocenská, invalidný dôchodok (podľa % invalidity), sirotský a vdovský dôchodok
+- Strata príjmu pri invalidite a PN, aj celková strata do dôchodku
+- Odporúčané sumy pripoistení (smrť, invalidita jednorazová / renta / s klesajúcou sumou, závažné ochorenia, trvalé následky, PN…), dajú sa upraviť a obnoviť
+- Grafy pokrytia čistého príjmu štátom a poistením pri PN a invalidite 40 % / 70 %
+- Potreba rodiny pri úmrtí živiteľa, rozpočet na poistné (5–10 % netto), porovnanie s aktuálnou zmluvou
+- Režim pre dieťa, export do PDF
+
 ## Spustenie
 
-Stačí otvoriť `index.html` (alebo `dochodkova-kalkulacka.html`) v prehliadači — nie je potrebný žiadny build krok ani server.
+Stačí otvoriť `index.html` (alebo `dochodkova-kalkulacka.html`, `zivotna-kalkulacka.html`) v prehliadači — nie je potrebný žiadny build krok ani server.
