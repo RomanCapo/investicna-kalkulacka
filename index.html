@@ -1,3 +1,7 @@
+<!DOCTYPE html>
+<html lang="sk">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Investičná kalkulačka</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -76,6 +80,12 @@
     color: var(--text-primary);
     font-family: "IBM Plex Mono", ui-monospace, monospace;
   }
+  input[type="text"] {
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    color: var(--text-primary);
+  }
+  input[type="text"]:focus,
   input[type="number"]:focus {
     outline: 2px solid var(--accent);
     outline-offset: 1px;
@@ -145,6 +155,23 @@
 </style>
 
 <div id="root"></div>
+
+<script>
+// Pri vložení cez <iframe> (napr. vo WordPresse) posiela stránka rodičovi svoju
+// aktuálnu výšku, aby sa iframe vedel natiahnuť bez vnútorného posúvania.
+if (window.parent !== window) {
+  let lastHeight = 0;
+  const postHeight = () => {
+    const h = document.documentElement.scrollHeight;
+    if (h !== lastHeight) {
+      lastHeight = h;
+      window.parent.postMessage({ type: "investicna-kalkulacka:height", height: h }, "*");
+    }
+  };
+  new ResizeObserver(postHeight).observe(document.body);
+  window.addEventListener("load", postHeight);
+}
+</script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -705,7 +732,7 @@ function PrintScenarioBlock({ label, calc }) {
   );
 }
 
-function PrintDocument({ printRef, compareEnabled, calcA, calcB, betterKey }) {
+function PrintDocument({ printRef, offerName, compareEnabled, calcA, calcB, betterKey }) {
   const dateStr = new Date().toLocaleDateString("sk-SK");
   return (
     <div
@@ -743,6 +770,9 @@ function PrintDocument({ printRef, compareEnabled, calcA, calcB, betterKey }) {
           </div>
         </div>
 
+        {offerName && (
+          <div style={{ fontSize: "26px", fontWeight: 800, lineHeight: 1.2, color: "#0f6b5c", marginBottom: "6px" }}>{offerName}</div>
+        )}
         <h1 style={{ fontSize: "20px", fontWeight: 800, margin: "0 0 4px", color: "#10231f" }}>Náklady vs. výnos investície</h1>
         <p style={{ fontSize: "11px", color: "#4b5b57", margin: "0 0 20px", maxWidth: "620px" }}>
           Ilustratívny prepočet zloženého úročenia s pravidelným mesačným vkladom, priebežnými nákladmi a jednorazovým poplatkom. Nie je investičné odporúčanie.
@@ -802,6 +832,7 @@ function App() {
   const [z, setZ] = useState(6.5);
   const [n, setN] = useState(10);
 
+  const [offerName, setOfferName] = useState("");
   const [compareEnabled, setCompareEnabled] = useState(false);
   const [x2, setX2] = useState(10000);
   const [m2, setM2] = useState(150);
@@ -854,7 +885,11 @@ function App() {
       }
       try {
         const dateSlug = new Date().toISOString().slice(0, 10);
-        const filename = `investicna-kalkulacka-${dateSlug}.pdf`;
+        // Názov ponuky do názvu súboru: bez diakritiky, len písmená/čísla a pomlčky.
+        const nameSlug = offerName
+          .normalize("NFD").replace(/[̀-ͯ]/g, "")
+          .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+        const filename = `investicna-kalkulacka-${nameSlug ? nameSlug + "-" : ""}${dateSlug}.pdf`;
         const blob = await window.html2pdf().set({
           margin: [10, 10, 14, 10],
           image: { type: "jpeg", quality: 0.98 },
@@ -897,7 +932,7 @@ function App() {
           <div className="fade-in" style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
             <span className="btn-accent" style={{ cursor: "default" }}>Generujem PDF…</span>
           </div>
-          <PrintDocument printRef={printRef} compareEnabled={compareEnabled} calcA={calcA} calcB={calcB} betterKey={betterKey} />
+          <PrintDocument printRef={printRef} offerName={offerName.trim()} compareEnabled={compareEnabled} calcA={calcA} calcB={calcB} betterKey={betterKey} />
         </div>
       ) : (
         <div
@@ -914,7 +949,19 @@ function App() {
                 Zadaj jednorazovú aj mesačnú investíciu, priebežné aj vstupný poplatok, očakávaný ročný výnos a dobu investície — kalkulačka dopočíta čistý zisk pri zloženom úročení a zobrazí vývoj aj rozdelenie hodnoty investície.
               </p>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
+            <div className="flex flex-col gap-2 max-w-md pt-4" style={{ borderTop: "1px solid var(--border)" }}>
+              <label htmlFor="offer-name" className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Názov ponuky</label>
+              <input
+                id="offer-name"
+                type="text"
+                className="w-full rounded-lg px-3 py-2 text-base font-semibold"
+                placeholder="napr. meno klienta"
+                maxLength={80}
+                value={offerName}
+                onChange={(e) => setOfferName(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <label className="flex items-center gap-2 text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
                 <input type="checkbox" checked={compareEnabled} onChange={(e) => setCompareEnabled(e.target.checked)} />
                 Pridať investíciu na porovnanie
