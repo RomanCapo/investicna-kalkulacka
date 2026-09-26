@@ -212,10 +212,12 @@ if (window.parent !== window) {
     }
   };
   new ResizeObserver(postHeight).observe(document.body);
+  setInterval(postHeight, 600); // poistka pre iframe z inej domény
   window.addEventListener("load", postHeight);
 }
 </script>
 
+<script src="js/plan-store.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
@@ -1173,15 +1175,38 @@ const DEFAULTS = {
   payoutMode: "annuity", returnPay: 4, inflation: 3,
 };
 
+// Prepojenie s finančným plánom (plan.html) — aktívne len pri otvorení s ?plan=1.
+// Vek, dôchodkový vek, mzda, odpracované roky a inflácia sa berú z profilu klienta.
+const PLAN = window.PlanStore && window.PlanStore.isPlanMode() ? window.PlanStore : null;
+if (PLAN) PLAN.mountBar("Renta", "retirement");
+
+function summarizeRetirement(c) {
+  return {
+    age: c.age, retAge: c.retAge, endAge: c.endAge, target: c.target,
+    statePension: c.statePension, p2Renta: c.p2Renta, p3Renta: c.p3Renta, renta: c.renta,
+    basePension: c.basePension, totalIncome: c.totalIncome, gap: c.gap, requiredMonthly: c.requiredMonthly,
+    investEnabled: c.investEnabled, savings: c.savings, monthly: c.monthly, returnAcc: c.returnAcc, costs: c.costs, capitalNom: c.capitalNom,
+    p2Enabled: c.p2Enabled, p2Balance: c.p2Balance, p2Monthly: c.p2Monthly, p2Return: c.p2Return,
+    p3Enabled: c.p3Enabled, p3Balance: c.p3Balance, p3Client: c.p3Client, p3Employer: c.p3Employer, p3Return: c.p3Return,
+    inflation: c.inflation,
+  };
+}
+
 function App() {
-  const [v, setV] = useState(DEFAULTS);
+  const [v, setV] = useState(() => (PLAN ? PLAN.initialInputs("retirement", DEFAULTS) : DEFAULTS));
   const set = (key) => (val) => setV((prev) => ({ ...prev, [key]: val }));
-  const [clientName, setClientName] = useState("");
+  const [clientName, setClientName] = useState(() => (PLAN ? PLAN.clientName(PLAN.load()) : ""));
   const [showReal, setShowReal] = useState(true);
   const [exporting, setExporting] = useState(false);
   const printRef = useRef(null);
 
   const calc = useMemo(() => computeRetirement(v), [v]);
+
+  useEffect(() => {
+    if (!PLAN) return;
+    const t = setTimeout(() => PLAN.saveModule("retirement", v, summarizeRetirement(calc)), 300);
+    return () => clearTimeout(t);
+  }, [calc]);
 
   const cssColor = (varName) => getComputedStyle(document.documentElement).getPropertyValue(varName).trim() || "#999";
   const colors = { principal: cssColor("--slot-principal"), cost: cssColor("--slot-cost"), profit: cssColor("--slot-profit"), pillar2: cssColor("--slot-pillar2"), pillar3: cssColor("--slot-pillar3") };

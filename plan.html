@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Finančný plán klienta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="js/embed-height.js"></script>
+<script src="js/plan-store.js"></script>
+<script src="js/plan-engine.js"></script>
+<script src="js/sample-plan.js"></script>
+<style>
+  :root {
+    --bg: #f5f7f5; --surface: #ffffff; --text-primary: #10231f; --text-secondary: #4b5b57; --text-muted: #7c8b86;
+    --accent: #0f6b5c; --accent-soft: #e3f1ec; --border: rgba(16,35,31,0.10); --border-strong: rgba(16,35,31,0.16);
+    --danger: #c23b32; --warn: #b7791f; --good: #0f7a3d; --tone-b: #4a55c8; --tone-b-soft: #e8eaf8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b1211; --surface: #141c1a; --text-primary: #f5f7f6; --text-secondary: #a9b6b2; --text-muted: #7f8d89;
+      --accent: #35b79f; --accent-soft: rgba(53,183,159,0.16); --border: rgba(255,255,255,0.10); --border-strong: rgba(255,255,255,0.16);
+      --danger: #e2635f; --warn: #e0a94a; --good: #3fbf78; --tone-b: #9aa2f0; --tone-b-soft: rgba(154,162,240,0.16);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b1211; --surface: #141c1a; --text-primary: #f5f7f6; --text-secondary: #a9b6b2; --text-muted: #7f8d89;
+    --accent: #35b79f; --accent-soft: rgba(53,183,159,0.16); --border: rgba(255,255,255,0.10); --border-strong: rgba(255,255,255,0.16);
+    --danger: #e2635f; --warn: #e0a94a; --good: #3fbf78; --tone-b: #9aa2f0; --tone-b-soft: rgba(154,162,240,0.16);
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--text-primary); font-family: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1120px; margin: 0 auto; padding: 40px 16px 64px; display: flex; flex-direction: column; gap: 36px; }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  .eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  h1 { font-size: clamp(28px, 4vw, 40px); font-weight: 800; margin: 6px 0 8px; text-wrap: balance; }
+  h2 { font-size: 22px; font-weight: 800; margin: 0; }
+  h3 { font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 14px; }
+  p { margin: 0; }
+  .lead { color: var(--text-secondary); max-width: 68ch; line-height: 1.55; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; min-width: 0; }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); }
+  .grid-3 { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+
+  .head { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; }
+  button, .btn { font: inherit; font-size: 14px; font-weight: 700; border-radius: 10px; padding: 9px 14px; cursor: pointer;
+    border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-primary); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-accent { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-ghost { border-color: transparent; background: transparent; color: var(--text-secondary); padding: 6px 8px; }
+  button:hover, .btn:hover { opacity: .9; }
+  .btn[aria-disabled="true"] { opacity: .5; pointer-events: none; }
+
+  .steps { display: flex; flex-wrap: wrap; gap: 8px; }
+  .steps a { display: inline-flex; gap: 8px; align-items: center; padding: 8px 12px; border-radius: 999px; background: var(--surface);
+    border: 1px solid var(--border); color: var(--text-primary); text-decoration: none; font-weight: 700; font-size: 14px; }
+  .steps b { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; }
+
+  .section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; margin-bottom: 14px; }
+  .section-head p { color: var(--text-secondary); font-size: 14px; }
+
+  .fields { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fields .full { grid-column: 1 / -1; }
+  @media (max-width: 480px) { .fields { grid-template-columns: 1fr; } }
+  label.f { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 700; color: var(--text-secondary); min-width: 0; }
+  label.f .unit { font-weight: 500; color: var(--text-muted); }
+  .hint { font-size: 12px; font-weight: 500; color: var(--text-muted); line-height: 1.4; }
+  input[type=text], input[type=date], input[type=email], input[type=tel], select {
+    font: inherit; font-size: 15px; font-weight: 600; color: var(--text-primary); background: var(--bg);
+    border: 1px solid var(--border-strong); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0; }
+  input.num { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  input:disabled { opacity: .75; cursor: not-allowed; }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+  label.check { display: flex; gap: 10px; align-items: center; font-size: 14px; font-weight: 700; cursor: pointer; }
+  input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
+  .sub { border-top: 1px solid var(--border); margin-top: 16px; padding-top: 16px; }
+
+  .list { display: flex; flex-direction: column; gap: 8px; }
+  .row { display: grid; gap: 8px; align-items: end; }
+  .row-child { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto; }
+  .row-loan { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr) repeat(3, minmax(0, .9fr)) auto; }
+  @media (max-width: 720px) { .row-loan { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-bottom: 10px; border-bottom: 1px solid var(--border); } }
+  .remove { border: none; background: none; color: var(--text-muted); font-size: 20px; line-height: 1; padding: 8px; }
+  .remove:hover { color: var(--danger); }
+  .add { align-self: flex-start; margin-top: 4px; }
+
+  .kpis { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); background: var(--bg); padding: 0 0 12px; }
+  .kpi { background: var(--accent-soft); border-radius: 12px; padding: 10px 12px; }
+  .kpi span { display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); }
+  .kpi strong { display: block; font-size: 16px; margin-top: 2px; }
+  /* Na širšej obrazovke zostanú ukazovatele viditeľné pri vypĺňaní formulára. */
+  @media (min-width: 760px) {
+    .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; position: sticky; top: 0; z-index: 5; padding: 10px 0; }
+    .kpi { padding: 12px 14px; }
+    .kpi span { font-size: 12px; }
+    .kpi strong { font-size: 20px; }
+  }
+  .kpi.neg strong { color: var(--danger); }
+
+  /* Existujúce zmluvy */
+  .contract-add { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px; }
+  .contract-add label.f { flex: 1 1 280px; }
+  .contract-add .btn { padding: 10px 16px; }
+  .contract-add .hint { flex-basis: 100%; font-size: 13px; }
+  .contract { border: 1px solid var(--border); border-radius: 12px; margin-top: 10px; background: var(--surface); }
+  .contract[open] { border-color: var(--border-strong); }
+  .contract summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 12px 14px; }
+  .contract summary::-webkit-details-marker { display: none; }
+  .contract summary::after { content: "▸"; color: var(--text-muted); grid-column: 4; transition: transform .15s ease; }
+  .contract[open] summary::after { transform: rotate(90deg); }
+  .c-group { font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+  .c-group.g-b { background: var(--tone-b-soft); color: var(--tone-b); }
+  .c-main { min-width: 0; }
+  .c-type { font-weight: 800; font-size: 15px; display: block; }
+  .c-meta { color: var(--text-muted); font-size: 13px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .c-prem { font-weight: 700; white-space: nowrap; }
+  .contract-body { padding: 14px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 14px; }
+  .fields-3 { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); }
+  .riders-box { background: var(--bg); border-radius: 10px; padding: 12px; }
+  .riders-box h4 { margin: 0 0 10px; font-size: 13px; font-weight: 800; }
+  .riders-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); }
+  .riders-grid input { background: var(--surface); }
+  .c-actions { display: flex; justify-content: flex-end; }
+  @media (max-width: 520px) { .contract summary { grid-template-columns: minmax(0, 1fr) auto; } .c-group { display: none; } .contract summary::after { grid-column: 3; } }
+
+  /* Ciele: 3 karty v prvom rade, 2 vycentrované v druhom (ako na webe). */
+  .goals { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 640px) { .goals { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 980px) {
+    .goals { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .goal { grid-column: span 2; }
+    .goal:nth-child(4) { grid-column: 2 / span 2; }
+  }
+  .goal { display: flex; flex-direction: column; padding: 24px; }
+  .goal-icon { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; margin-bottom: 16px; }
+  .goal-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .tone-a { background: var(--accent-soft); color: var(--accent); }
+  .tone-b { background: var(--tone-b-soft); color: var(--tone-b); }
+  .goal-title { font-size: 20px; font-weight: 800; letter-spacing: 0; text-transform: none; color: var(--text-primary); margin: 0 0 6px; }
+  .goal-desc { color: var(--text-secondary); font-size: 14px; line-height: 1.5; margin-bottom: 16px; }
+  .goal.selected { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .goal-select { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+  .goal-add { align-self: flex-start; border: 1.5px dashed var(--accent); color: var(--accent); background: transparent; }
+  .goal-add:hover { background: var(--accent-soft); opacity: 1; }
+  .goal-added { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; }
+  .goal-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: #fff; font-size: 13px; font-weight: 800; padding: 6px 12px; border-radius: 999px; }
+  .goal-select textarea { font: inherit; font-size: 14px; font-weight: 600; color: var(--text-primary); background: var(--bg); border: 1px solid var(--border-strong);
+    border-radius: 8px; padding: 8px 10px; width: 100%; resize: vertical; min-height: 58px; }
+  .goal-select textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+  .goal-calcs { margin-top: auto; border-top: 1px solid var(--border); padding-top: 14px; display: flex; flex-direction: column; gap: 14px; }
+  .calc { display: flex; flex-direction: column; gap: 10px; }
+  .calc-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 10px; }
+  .calc-name { font-size: 15px; font-weight: 800; flex: 1 1 140px; }
+  .calc-desc { color: var(--text-secondary); font-size: 13px; line-height: 1.45; }
+  .calc.soon .calc-name { color: var(--text-muted); }
+  .goal-link { color: var(--accent); font-weight: 800; text-decoration: none; font-size: 15px; }
+  .goal-link:hover { text-decoration: underline; }
+  .metrics strong { text-align: right; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+  .chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .chip.done { background: var(--accent-soft); color: var(--accent); }
+  .chip.todo { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+  .chip.soon { background: var(--bg); color: var(--text-muted); border: 1px dashed var(--border-strong); }
+  .metrics { display: grid; gap: 6px; font-size: 14px; }
+  .metrics div { display: flex; justify-content: space-between; gap: 12px; }
+  .metrics span { color: var(--text-secondary); }
+  .calc .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+
+  .summary-card { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  @media (max-width: 720px) { .summary-card { grid-template-columns: 1fr; } }
+  .checklist { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 6px; font-size: 14px; }
+  .checklist li { display: flex; gap: 8px; align-items: baseline; }
+  .checklist .ok { color: var(--good); font-weight: 800; }
+  .checklist .no { color: var(--text-muted); font-weight: 800; }
+  .muted { color: var(--text-muted); }
+  .env-warning { background: #fdf4e3; color: #5c3d08; border: 1px solid #f0d49a; border-radius: 12px; padding: 14px 16px; font-size: 14px; line-height: 1.5; }
+  .env-warning strong { display: block; margin-bottom: 2px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<main>
+  <header class="head">
+    <div>
+      <div class="eyebrow">Finančný plán</div>
+      <h1 id="title">Nový klient</h1>
+      <p class="lead">Zadajte parametre klienta raz — kalkulačky si ich prevezmú, výsledky sa uložia do plánu a na konci z nich vznikne jeden súhrn s akčným plánom a PDF.</p>
+    </div>
+    <div class="toolbar">
+      <button type="button" id="btn-sample">Načítať ukážkového klienta</button>
+      <button type="button" id="btn-export">Uložiť zálohu</button>
+      <button type="button" id="btn-import">Nahrať zálohu</button>
+      <input type="file" id="import-file" accept="application/json,.json" class="sr-only" tabindex="-1">
+      <button type="button" id="btn-reset">Nový klient</button>
+    </div>
+  </header>
+
+  <div id="env-warning" class="env-warning" role="alert" hidden>
+    <strong>Stránka je otvorená v náhľade, ktorý nevie načítať ostatné súbory plánu.</strong>
+    Kalkulačky sa preto neotvoria a údaje sa neuložia. Otvorte <code>plan.html</code> v bežnom prehliadači — v Prieskumníkovi
+    v priečinku <code>investicna-kalkulacka</code> naň dvakrát kliknite (otvorí sa v Edge alebo Chrome), prípadne použite webovú adresu
+    (napr. GitHub Pages).
+  </div>
+  <script>
+    // Náhľad, ktorý stránku zobrazí ako data: adresu, nenačíta js/*.js ani odkazy na ďalšie stránky.
+    if (location.protocol === "data:" || !window.PlanStore) document.getElementById("env-warning").hidden = false;
+  </script>
+
+  <nav class="steps" aria-label="Kroky">
+    <a href="#profil"><b>1</b>Parametre klienta</a>
+    <a href="#zmluvy"><b>2</b>Existujúce zmluvy</a>
+    <a href="#ciele"><b>3</b>Ciele</a>
+    <a href="#suhrn"><b>4</b>Súhrn a PDF</a>
+  </nav>
+
+  <section id="profil" aria-labelledby="profil-h">
+    <div class="section-head">
+      <h2 id="profil-h">1 · Parametre klienta</h2>
+      <p>Ukladá sa automaticky v tomto prehliadači.</p>
+    </div>
+
+    <div class="kpis" id="kpis" aria-live="polite"></div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Klient</h3>
+        <div class="fields">
+          <label class="f">Meno<input type="text" data-path="client.firstName" autocomplete="off"></label>
+          <label class="f">Priezvisko<input type="text" data-path="client.lastName" autocomplete="off"></label>
+          <label class="f">Dátum narodenia<input type="date" data-path="client.birthDate"></label>
+          <label class="f">Vek <span class="unit">ak nepoznáte dátum</span><input type="text" inputmode="numeric" class="num" data-path="client.age" data-type="number"></label>
+          <label class="f">E-mail<input type="email" data-path="client.email" autocomplete="off"></label>
+          <label class="f">Telefón<input type="tel" data-path="client.phone" autocomplete="off"></label>
+          <label class="f">Odpracované roky<input type="text" inputmode="numeric" class="num" data-path="client.yearsWorked" data-type="number"></label>
+          <label class="f">Dôchodkový vek<input type="text" inputmode="numeric" class="num" data-path="client.retirementAge" data-type="number"></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Domácnosť</h3>
+        <label class="check"><input type="checkbox" data-path="household.partner.enabled" data-type="bool"> Manžel / manželka alebo partner</label>
+        <div class="fields" id="partner-fields" style="margin-top:12px">
+          <label class="f">Meno partnera<input type="text" data-path="household.partner.firstName" autocomplete="off"></label>
+          <label class="f">Dátum narodenia<input type="date" data-path="household.partner.birthDate"></label>
+          <label class="f full">Čistý príjem partnera <span class="unit">€ / mes.</span><input type="text" inputmode="decimal" class="num" data-path="household.partner.netIncome" data-type="number"></label>
+        </div>
+        <div class="sub">
+          <h3>Nezaopatrené deti</h3>
+          <div class="list" id="children"></div>
+          <button type="button" class="btn-ghost add" id="add-child">+ Pridať dieťa</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Príjmy a výdavky</h3>
+        <div class="fields">
+          <label class="f">Hrubá mzda <span class="unit">€ / mes.</span><input type="text" inputmode="decimal" class="num" data-path="finances.grossIncome" data-type="number"></label>
+          <label class="f">Čistá mzda <span class="unit" id="net-note">vypočítaná, dá sa prepísať</span>
+            <input type="text" inputmode="decimal" class="num" id="net-input"></label>
+          <label class="f">Ďalšie príjmy domácnosti <span class="unit">€ / mes.</span><input type="text" inputmode="decimal" class="num" data-path="finances.otherIncome" data-type="number">
+            <span class="hint">Prenájom, podnikanie, prídavky…</span></label>
+          <label class="check" style="align-self:center"><input type="checkbox" data-path="finances.breadwinner" data-type="bool"> Klient je živiteľ rodiny</label>
+          <label class="f">Životné náklady <span class="unit">€ / mes.</span><input type="text" inputmode="decimal" class="num" data-path="finances.livingExpenses" data-type="number">
+            <span class="hint">Bez splátok úverov, poistného a sporenia.</span></label>
+          <label class="f">Z toho nevyhnutné <span class="unit">€ / mes.</span><input type="text" inputmode="decimal" class="num" data-path="finances.essentialExpenses" data-type="number">
+            <span class="hint">Bývanie, energie, jedlo, doprava — základ finančnej rezervy.</span></label>
+          <label class="f">Súčasné sporenie a investovanie <span class="unit">€ / mes.</span><input type="text" inputmode="decimal" class="num" data-path="finances.currentInvesting" data-type="number">
+            <span class="hint">Vrátane 3. piliera a investícií na dôchodok.</span></label>
+          <label class="f">Súčasné životné poistenie <span class="unit">€ / mes.</span><input type="text" inputmode="decimal" class="num" data-path="finances.insurancePremiums" data-type="number">
+            <span class="hint" id="life-prem-hint">Ak zadáte zmluvy v kroku 2, vypočíta sa z nich.</span></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Majetok a rezerva</h3>
+        <div class="fields">
+          <label class="f">Hotovosť a sporiace účty <span class="unit">€</span><input type="text" inputmode="decimal" class="num" data-path="finances.liquidSavings" data-type="number">
+            <span class="hint">Peniaze dostupné hneď — finančná rezerva.</span></label>
+          <label class="f">Ostatný majetok <span class="unit">€</span><input type="text" inputmode="decimal" class="num" data-path="finances.otherAssets" data-type="number">
+            <span class="hint">Nehnuteľnosti, auto… (bez dôchodkových účtov — tie sú v kalkulačke).</span></label>
+          <label class="f">Rezerva na <span class="unit">mesiacov výdavkov</span><input type="text" inputmode="decimal" class="num" data-path="finances.reserveMonths" data-type="number"></label>
+        </div>
+        <div class="sub">
+          <h3>Úvery</h3>
+          <div class="list" id="loans"></div>
+          <button type="button" class="btn-ghost add" id="add-loan">+ Pridať úver</button>
+          <p class="hint" style="margin-top:6px">Zostatok úverov sa premieta do odporúčaného životného poistenia, splátky do cashflow aj finančnej rezervy.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Poradca a predpoklady</h3>
+        <div class="fields">
+          <label class="f">Meno poradcu<input type="text" data-path="advisor.name" autocomplete="off"></label>
+          <label class="f">Spoločnosť<input type="text" data-path="advisor.company" autocomplete="off"></label>
+          <label class="f">Registračné číslo NBS<input type="text" data-path="advisor.nbsRegNumber" autocomplete="off"></label>
+          <label class="f">E-mail poradcu<input type="email" data-path="advisor.email" autocomplete="off"></label>
+          <label class="f">Dátum plánu<input type="date" data-path="meta.date"></label>
+          <label class="f">Inflácia <span class="unit">% ročne</span><input type="text" inputmode="decimal" class="num" data-path="assumptions.inflationPct" data-type="number"></label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="zmluvy" aria-labelledby="zmluvy-h">
+    <div class="section-head">
+      <h2 id="zmluvy-h">2 · Existujúce zmluvy</h2>
+      <p>Poistenie, ktoré klient už má. Poistné sa premietne do cashflow, krytie zo životných a úrazových zmlúv sa porovná s odporúčaním v kalkulačke Životné poistenie.</p>
+    </div>
+    <div class="card">
+      <div class="contract-add">
+        <label class="f">Typ zmluvy<select id="contract-type" aria-describedby="contract-total"></select></label>
+        <button type="button" class="btn btn-accent" id="add-contract">+ Pridať zmluvu</button>
+        <p class="hint" id="contract-total"></p>
+      </div>
+      <div id="contracts"></div>
+    </div>
+  </section>
+
+  <section id="ciele" aria-labelledby="ciele-h">
+    <div class="section-head">
+      <h2 id="ciele-h">3 · Ciele</h2>
+      <p>Vyberte oblasť, na ktorej chcete pracovať. Kalkulačky sa otvoria s údajmi klienta a zmeny sa ukladajú do plánu.</p>
+    </div>
+    <!-- Ciele a kalkulačky sú priamo v HTML, aby boli dostupné vždy — aj bez
+         vyplnených údajov a aj keby sa skripty nenačítali. Skript len doplní stav. -->
+    <div class="goals" id="calcs">
+      <article class="card goal" data-goal-card="housing" aria-labelledby="goal-housing">
+        <div class="goal-icon tone-a" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>
+        </div>
+        <h3 class="goal-title" id="goal-housing">Bývanie a reality</h3>
+        <p class="goal-desc">Vlastné bývanie, hypotéka a nehnuteľnosti.</p>
+        <div class="goal-select" data-goal="housing" data-placeholder="napr. kúpa väčšieho bytu do 3 rokov"></div>
+        <div class="goal-calcs">
+          <div class="calc soon">
+            <div class="calc-head"><span class="calc-name">Hypotéka a kúpa nehnuteľnosti</span><span class="chip soon">Pripravujeme</span></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card goal" data-goal-card="retirement" aria-labelledby="goal-retirement">
+        <div class="goal-icon tone-b" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        </div>
+        <h3 class="goal-title" id="goal-retirement">Renta</h3>
+        <p class="goal-desc">Príjem na dôchodok a finančná nezávislosť.</p>
+        <div class="goal-select" data-goal="retirement" data-placeholder="napr. dôchodok 2 000 € mesačne od 62 rokov"></div>
+        <div class="goal-calcs">
+          <div class="calc" data-calc="retirement">
+            <div class="calc-head"><span class="calc-name">Dôchodková kalkulačka</span><span class="chip todo" data-status>Nevyplnené</span></div>
+            <p class="calc-desc">Štátny dôchodok, 2. a 3. pilier a renta z investícií oproti cieľovému príjmu.</p>
+            <div class="metrics" data-metrics hidden></div>
+            <div data-extra></div>
+            <div class="actions">
+              <a class="goal-link" data-open href="dochodkova-kalkulacka.html?plan=1">Otvoriť →</a>
+              <button type="button" class="btn-ghost" data-clear="retirement" hidden>Odstrániť z plánu</button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card goal" data-goal-card="investments" aria-labelledby="goal-investments">
+        <div class="goal-icon tone-a" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+        </div>
+        <h3 class="goal-title" id="goal-investments">Sporenie a investície</h3>
+        <p class="goal-desc">Rezerva, pravidelné investovanie a zhodnotenie.</p>
+        <div class="goal-select" data-goal="investments" data-placeholder="napr. rezerva na 6 mesiacov a 200 € mesačne do investícií"></div>
+        <div class="goal-calcs">
+          <div class="calc" data-calc="investments">
+            <div class="calc-head"><span class="calc-name">Investičná kalkulačka</span><span class="chip todo" data-status>Nevyplnené</span></div>
+            <p class="calc-desc">Náklady a výnos investície — jednorazový aj pravidelný vklad, poplatky, projekcia.</p>
+            <div class="metrics" data-metrics hidden></div>
+            <div data-extra></div>
+            <div class="actions">
+              <a class="goal-link" data-open href="index.html?plan=1">Otvoriť →</a>
+              <button type="button" class="btn-ghost" data-clear="investments" hidden>Odstrániť z plánu</button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card goal" data-goal-card="security" aria-labelledby="goal-security">
+        <div class="goal-icon tone-b" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6l8-3z"/><path d="M8.5 12l2.5 2.5 4.5-4.5"/></svg>
+        </div>
+        <h3 class="goal-title" id="goal-security">Zabezpečenie</h3>
+        <p class="goal-desc">Ochrana príjmu, rodiny a majetku.</p>
+        <div class="goal-select" data-goal="security" data-placeholder="napr. zabezpečiť rodinu a splatiť hypotéku pri smrti či invalidite"></div>
+        <div class="goal-calcs">
+          <div class="calc" data-calc="security">
+            <div class="calc-head"><span class="calc-name">Životné poistenie</span><span class="chip todo" data-status>Nevyplnené</span></div>
+            <p class="calc-desc">Odporúčané poistné sumy podľa príjmu, úverov a rodiny; porovnanie so súčasnou zmluvou.</p>
+            <div class="metrics" data-metrics hidden></div>
+            <div data-extra></div>
+            <div class="actions">
+              <a class="goal-link" data-open href="zivotna-kalkulacka.html?plan=1">Otvoriť →</a>
+              <button type="button" class="btn-ghost" data-clear="security" hidden>Odstrániť z plánu</button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card goal" data-goal-card="incomeScaling" aria-labelledby="goal-income">
+        <div class="goal-icon tone-a" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 20V6"/><path d="M7 11l5-5 5 5"/><path d="M5 20h14"/></svg>
+        </div>
+        <h3 class="goal-title" id="goal-income">Navýšenie príjmu</h3>
+        <p class="goal-desc">Ako zvýšiť príjmy a lepšie s nimi narábať.</p>
+        <div class="goal-select" data-goal="incomeScaling" data-placeholder="napr. zvýšiť príjem o 500 € mesačne do dvoch rokov"></div>
+        <div class="goal-calcs">
+          <div class="calc soon">
+            <div class="calc-head"><span class="calc-name">Plán rastu príjmu</span><span class="chip soon">Pripravujeme</span></div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section id="suhrn" aria-labelledby="suhrn-h">
+    <div class="section-head"><h2 id="suhrn-h">4 · Súhrn a PDF</h2></div>
+    <div class="card summary-card">
+      <div>
+        <p class="lead">Súhrn prepojí všetky oblasti: cashflow dnes a po realizácii plánu, finančnú rezervu, poistenie podľa úverov a dôchodkovú medzeru. Z neho vznikne akčný plán a PDF.</p>
+        <ul class="checklist" id="checklist"></ul>
+      </div>
+      <a class="btn btn-accent" href="financny-plan.html" style="padding:14px 22px;font-size:16px">Zobraziť súhrn a PDF →</a>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+  const PS = window.PlanStore;
+  // Bez načítaných skriptov plánu ostanú aspoň statické karty kalkulačiek a upozornenie.
+  if (!PS || !window.PlanEngine) return;
+
+  const nf = new Intl.NumberFormat("sk-SK", { maximumFractionDigits: 0 });
+  const eur = (v) => (typeof v === "number" && isFinite(v) ? nf.format(Math.round(v)) + " €" : "—");
+  const signed = (v) => (v > 0 ? "+" : v < 0 ? "−" : "") + eur(Math.abs(v));
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const parseNum = (s) => { const n = parseFloat(String(s).replace(/[\s  ]/g, "").replace(",", ".")); return isFinite(n) ? n : null; };
+  const fmtInput = (v) => (v == null || v === "" ? "" : String(v).replace(".", ","));
+  const fmtTime = (iso) => new Date(iso).toLocaleString("sk-SK", { day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" });
+
+  const getPath = (obj, path) => path.split(".").reduce((o, k) => (o == null ? undefined : o[k]), obj);
+  function setPath(obj, path, value) {
+    const keys = path.split(".");
+    let o = obj;
+    for (const k of keys.slice(0, -1)) o = o[k];
+    o[keys[keys.length - 1]] = value;
+  }
+
+  // ------------------------------------------------------------ Formulár
+  function fillForm(s) {
+    $$("[data-path]").forEach((el) => {
+      const v = getPath(s, el.dataset.path);
+      if (el.dataset.type === "bool") el.checked = !!v;
+      else if (el.dataset.type === "number") el.value = fmtInput(v === 0 && el.dataset.path !== "finances.reserveMonths" ? "" : v);
+      else el.value = v == null ? "" : v;
+    });
+    renderChildren(s);
+    renderLoans(s);
+    renderContracts(s);
+    refreshDerived(s);
+  }
+
+  document.addEventListener("input", (e) => {
+    const el = e.target;
+    if (!el.dataset || !el.dataset.path) return;
+    const value = el.dataset.type === "bool" ? el.checked : el.dataset.type === "number" ? parseNum(el.value) : el.value;
+    const s = PS.update((st) => setPath(st, el.dataset.path, el.dataset.type === "number" && value == null ? 0 : value));
+    // Mená a zloženie domácnosti sa zobrazujú pri poistených osobách v zmluvách.
+    if (/^(household\.|client\.firstName)/.test(el.dataset.path)) renderContracts(s);
+    refreshDerived(s);
+  });
+
+  // Čistá mzda: vypočítaná z hrubej, prepísaním sa prepne na ručnú hodnotu.
+  $("#net-input").addEventListener("input", (e) => {
+    const v = parseNum(e.target.value);
+    const s = PS.update((st) => {
+      st.finances.netManual = v != null;
+      st.finances.netIncome = v == null ? 0 : v;
+    });
+    refreshDerived(s, true);
+  });
+  document.addEventListener("click", (e) => {
+    if (e.target.id !== "net-reset") return;
+    const s = PS.update((st) => { st.finances.netManual = false; });
+    refreshDerived(s);
+  });
+
+  // ------------------------------------------------------------ Zoznamy
+  function renderChildren(s) {
+    $("#children").innerHTML = (s.household.children || []).map((c, i) => `
+      <div class="row row-child">
+        <label class="f">Meno<input type="text" data-list="children" data-i="${i}" data-key="firstName" value="${esc(c.firstName)}" autocomplete="off"></label>
+        <label class="f">Dátum narodenia<input type="date" data-list="children" data-i="${i}" data-key="birthDate" value="${esc(c.birthDate)}"></label>
+        <button type="button" class="remove" data-remove="children" data-i="${i}" aria-label="Odstrániť dieťa">×</button>
+      </div>`).join("") || `<p class="hint">Žiadne deti.</p>`;
+  }
+
+  const LOAN_KINDS = [["mortgage", "Hypotéka"], ["consumer", "Spotrebný úver"], ["car", "Auto / leasing"], ["other", "Iný úver"]];
+  function renderLoans(s) {
+    $("#loans").innerHTML = (s.loans || []).map((l, i) => `
+      <div class="row row-loan">
+        <label class="f">Názov<input type="text" data-list="loans" data-i="${i}" data-key="name" value="${esc(l.name)}" placeholder="napr. banka" autocomplete="off"></label>
+        <label class="f">Typ<select data-list="loans" data-i="${i}" data-key="kind">${LOAN_KINDS.map(([v, t]) => `<option value="${v}"${l.kind === v ? " selected" : ""}>${t}</option>`).join("")}</select></label>
+        <label class="f">Zostatok €<input type="text" inputmode="decimal" class="num" data-list="loans" data-i="${i}" data-key="balance" data-type="number" value="${fmtInput(l.balance || "")}"></label>
+        <label class="f">Splátka €<input type="text" inputmode="decimal" class="num" data-list="loans" data-i="${i}" data-key="monthlyPayment" data-type="number" value="${fmtInput(l.monthlyPayment || "")}"></label>
+        <label class="f">Úrok %<input type="text" inputmode="decimal" class="num" data-list="loans" data-i="${i}" data-key="ratePct" data-type="number" value="${fmtInput(l.ratePct || "")}"></label>
+        <button type="button" class="remove" data-remove="loans" data-i="${i}" aria-label="Odstrániť úver">×</button>
+      </div>`).join("") || `<p class="hint">Žiadne úvery.</p>`;
+  }
+
+  const listTarget = (st, list) => (list === "children" ? st.household.children : st.loans);
+  function onListEdit(e) {
+    const el = e.target;
+    if (!el.dataset || !el.dataset.list) return;
+    const value = el.dataset.type === "number" ? parseNum(el.value) || 0 : el.value;
+    const s = PS.update((st) => { listTarget(st, el.dataset.list)[+el.dataset.i][el.dataset.key] = value; });
+    if (el.dataset.list === "children") renderContracts(s);
+    refreshDerived(s);
+  }
+  document.addEventListener("input", onListEdit);
+  document.addEventListener("change", (e) => { if (e.target.tagName === "SELECT") onListEdit(e); });
+
+  document.addEventListener("click", (e) => {
+    const rm = e.target.closest("[data-remove]");
+    if (!rm) return;
+    const s = PS.update((st) => { listTarget(st, rm.dataset.remove).splice(+rm.dataset.i, 1); });
+    rm.dataset.remove === "children" ? (renderChildren(s), renderContracts(s)) : renderLoans(s);
+    refreshDerived(s);
+  });
+  $("#add-child").addEventListener("click", () => {
+    const s = PS.update((st) => st.household.children.push({ firstName: "", birthDate: "" }));
+    renderChildren(s); renderContracts(s); refreshDerived(s);
+    $$("#children input[data-key=firstName]").pop().focus();
+  });
+  $("#add-loan").addEventListener("click", () => {
+    const s = PS.update((st) => st.loans.push({ name: "", kind: "mortgage", balance: 0, monthlyPayment: 0, ratePct: 0 }));
+    renderLoans(s); refreshDerived(s);
+    $$("#loans input[data-key=name]").pop().focus();
+  });
+
+  // ------------------------------------------------------------ Odvodené údaje
+  function refreshDerived(s, typingNet) {
+    const name = PS.clientName(s);
+    $("#title").textContent = name || "Nový klient";
+    document.title = name ? `Finančný plán — ${name}` : "Finančný plán klienta";
+    $("#partner-fields").style.display = s.household.partner.enabled ? "" : "none";
+
+    // Čistá mzda
+    const net = PS.clientNet(s);
+    const netInput = $("#net-input");
+    if (!typingNet) netInput.value = s.finances.netManual ? fmtInput(s.finances.netIncome) : (net ? fmtInput(net) : "");
+    $("#net-note").innerHTML = s.finances.netManual
+      ? `zadaná ručne · <button type="button" id="net-reset" class="btn-ghost" style="padding:0;font-size:12px;color:var(--accent)">vypočítať z hrubej</button>`
+      : "vypočítaná, dá sa prepísať";
+
+    renderKpis(s);
+    renderContractTotals(s);
+    renderGoals(s);
+    renderCalcs(s);
+    renderChecklist(s);
+  }
+
+  // ------------------------------------------------------------ Ciele klienta
+  const GOAL_TITLES = { housing: "Bývanie a reality", retirement: "Renta", investments: "Sporenie a investície", security: "Zabezpečenie", incomeScaling: "Navýšenie príjmu" };
+
+  function renderGoals(s) {
+    $$("[data-goal]").forEach((box) => {
+      const key = box.dataset.goal;
+      const on = PS.isGoalSelected(s, key);
+      const note = (s.goals[key] && s.goals[key].note) || "";
+      $(`[data-goal-card="${key}"]`).classList.toggle("selected", on);
+      if (!box.firstChild) {
+        box.innerHTML = `
+          <button type="button" class="goal-add" data-goal-add="${key}">+ Pridať cieľ</button>
+          <div class="goal-added">
+            <span class="goal-badge">✓ Cieľ klienta</span>
+            <button type="button" class="btn-ghost" data-goal-remove="${key}">Odobrať</button>
+          </div>
+          <label class="f">Čo chce klient dosiahnuť? <span class="unit">nepovinné, zobrazí sa v PDF</span>
+            <textarea rows="2" data-goal-note="${key}" placeholder="${esc(box.dataset.placeholder)}"></textarea></label>`;
+      }
+      $(".goal-add", box).hidden = on;
+      $(".goal-added", box).hidden = !on;
+      $("label", box).hidden = !on;
+      const ta = $("textarea", box);
+      if (document.activeElement !== ta) ta.value = note;
+    });
+  }
+
+  document.addEventListener("click", (e) => {
+    const add = e.target.closest("[data-goal-add]");
+    const remove = e.target.closest("[data-goal-remove]");
+    if (!add && !remove) return;
+    const key = (add || remove).dataset[add ? "goalAdd" : "goalRemove"];
+    refreshDerived(PS.setGoal(key, { selected: !!add }));
+    const focusEl = add ? $(`[data-goal-note="${key}"]`) : $(`[data-goal-add="${key}"]`);
+    if (focusEl) focusEl.focus();
+  });
+  document.addEventListener("input", (e) => {
+    const key = e.target.dataset && e.target.dataset.goalNote;
+    if (!key) return;
+    const s = PS.setGoal(key, { note: e.target.value });
+    renderChecklist(s);
+  });
+
+  function renderKpis(s) {
+    const { report } = window.PlanEngine.buildReport(s);
+    const cf = report.summary.cashflow, nw = report.summary.netWorth;
+    const outflow = cf.livingExpenses + cf.debtPayments + cf.insurancePremiums + cf.investmentContributions;
+    $("#kpis").innerHTML = [
+      ["Čistý príjem domácnosti", eur(cf.netIncome)],
+      ["Výdavky, splátky, poistné a sporenie", eur(outflow)],
+      ["Voľný cashflow dnes", signed(cf.free), cf.free < 0],
+      ["Čistý majetok", eur(nw.net)],
+    ].map(([l, v, neg]) => `<div class="kpi${neg ? " neg" : ""}"><span>${l}</span><strong class="mono">${v}</strong></div>`).join("");
+  }
+
+  // ------------------------------------------------------------ Existujúce zmluvy
+  const FREQ = [[12, "mesačne"], [4, "štvrťročne"], [2, "polročne"], [1, "ročne"]];
+  const SUBJECT_HINT = { property: "adresa alebo predmet poistenia", vehicle: "vozidlo, EČV", other: "predmet poistenia", person: "rozsah, napr. Európa" };
+  const openContracts = new Set();
+  const nf2 = new Intl.NumberFormat("sk-SK", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  const eurMonthly = (v) => `${nf2.format(Math.round(v * 100) / 100)} € / mes.`;
+  const plural = (n, one, few, many) => (n === 1 ? one : n >= 2 && n <= 4 ? few : many);
+
+  const TYPE_OPTIONS = (() => {
+    const groups = [...new Set(PS.CONTRACT_TYPES.map((t) => t.group))];
+    return groups.map((g) => `<optgroup label="${g}">${PS.CONTRACT_TYPES.filter((t) => t.group === g)
+      .map((t) => `<option value="${t.key}">${esc(t.label)}</option>`).join("")}</optgroup>`).join("");
+  })();
+  $("#contract-type").innerHTML = TYPE_OPTIONS;
+
+  function insuredOptions(s, current) {
+    const opts = [["client", `${s.client.firstName || "Klient"} (klient)`]];
+    if (s.household.partner.enabled) opts.push(["partner", `${s.household.partner.firstName || "Partner"} (partner)`]);
+    (s.household.children || []).forEach((c, i) => opts.push([`child:${i}`, `${c.firstName || `Dieťa ${i + 1}`} (dieťa)`]));
+    opts.push(["other", "Iná osoba"]);
+    return opts.map(([v, t]) => `<option value="${v}"${v === current ? " selected" : ""}>${esc(t)}</option>`).join("");
+  }
+
+  function contractMeta(s, c) {
+    const t = PS.contractType(c.type);
+    const who = ["life", "person"].includes(t.kind) ? PS.insuredLabel(s, c.insured) : "";
+    return [c.provider, who, c.subject].filter(Boolean).join(" · ") || "doplňte poisťovňu a údaje";
+  }
+
+  function contractHtml(s, c, i) {
+    const t = PS.contractType(c.type);
+    const field = (label, input) => `<label class="f">${label}${input}</label>`;
+    const attrs = (key, extra = "") => `data-ci="${i}" data-ckey="${key}" ${extra}`;
+    const text = (key, ph = "") => `<input type="text" ${attrs(key)} value="${esc(c[key] || "")}" placeholder="${esc(ph)}" autocomplete="off">`;
+    const money = (key) => `<input type="text" inputmode="decimal" class="num" ${attrs(key, 'data-type="number"')} value="${fmtInput(c[key] || "")}">`;
+    const date = (key) => `<input type="date" ${attrs(key)} value="${esc(c[key] || "")}">`;
+    const riders = PS.contractRiders(c);
+    const compared = c.insured === "client" || c.insured === "child:0";
+    const fields = [
+      field("Typ zmluvy", `<select ${attrs("type")}>${TYPE_OPTIONS.replace(`value="${c.type}"`, `value="${c.type}" selected`)}</select>`),
+      field("Poisťovňa", text("provider", "napr. Allianz, Kooperativa…")),
+      field("Číslo zmluvy", text("number")),
+      ["life", "person"].includes(t.kind) ? field("Poistená osoba", `<select ${attrs("insured")}>${insuredOptions(s, c.insured)}</select>`) : "",
+      t.kind !== "life" ? field(t.kind === "person" ? "Rozsah / poznámka" : "Predmet poistenia", text("subject", SUBJECT_HINT[t.kind] || "")) : "",
+      ["property", "vehicle", "other"].includes(t.kind) ? field('Poistná suma <span class="unit">€</span>', money("sumInsured")) : "",
+      field('Poistné <span class="unit">€ za platbu</span>', money("premium")),
+      field("Platba", `<select ${attrs("frequency", 'data-type="number"')}>${FREQ.map(([v, l]) => `<option value="${v}"${(+c.frequency || 12) === v ? " selected" : ""}>${l}</option>`).join("")}</select>`),
+      field('Začiatok <span class="unit">určuje výročie</span>', date("startDate")),
+      field('Koniec <span class="unit">nepovinné</span>', date("endDate")),
+    ].join("");
+    const ridersHtml = riders.length ? `
+      <div class="riders-box">
+        <h4>Poistné sumy v zmluve</h4>
+        <div class="riders-grid">${riders.map(([k, label, unit]) => `
+          <label class="f">${esc(label)} <span class="unit">${unit}</span>
+            <input type="text" inputmode="decimal" class="num" data-ci="${i}" data-rider="${k}" value="${fmtInput((c.riders || {})[k] || "")}"></label>`).join("")}
+        </div>
+        <p class="hint" style="margin-top:10px">${compared
+          ? "Tieto sumy sa v kalkulačke Životné poistenie zobrazia v stĺpci „Aktuálna zmluva“ a porovnajú s odporúčaním."
+          : "Kalkulačka porovnáva klienta a prvé dieťa — pre túto osobu bude zmluva uvedená v zozname zmlúv."}</p>
+      </div>` : "";
+    return `<details class="contract" data-cid="${c.id}"${openContracts.has(c.id) ? " open" : ""}>
+      <summary>
+        <span class="c-group${t.group === "Osoby" || t.group === "Vozidlá" ? "" : " g-b"}">${t.group}</span>
+        <span class="c-main"><span class="c-type" data-ctype>${esc(t.label)}</span><span class="c-meta" data-cmeta>${esc(contractMeta(s, c))}</span></span>
+        <span class="c-prem mono" data-cprem>${eurMonthly(PS.contractMonthly(c))}</span>
+      </summary>
+      <div class="contract-body">
+        <div class="fields-3">${fields}</div>
+        ${ridersHtml}
+        <div class="c-actions"><button type="button" class="btn-ghost" data-remove-contract="${i}">Odstrániť zmluvu</button></div>
+      </div>
+    </details>`;
+  }
+
+  function renderContracts(s) {
+    const list = s.contracts || [];
+    $("#contracts").innerHTML = list.length ? list.map((c, i) => contractHtml(s, c, i)).join("")
+      : `<p class="hint" style="margin-top:12px">Zatiaľ žiadne zmluvy. Vyberte typ a kliknite na „Pridať zmluvu“.</p>`;
+    renderContractTotals(s);
+  }
+
+  // Súčty, texty v hlavičkách zmlúv a pole „Súčasné životné poistenie“ v profile.
+  function renderContractTotals(s) {
+    const list = PS.activeContracts(s);
+    const life = list.filter(PS.isLifeContract);
+    $("#contract-total").textContent = list.length
+      ? `${list.length} ${plural(list.length, "zmluva", "zmluvy", "zmlúv")} · poistné spolu ${eurMonthly(PS.lifePremiums(s) * (life.length ? 1 : 0) + PS.otherPremiums(s))}` +
+        (life.length ? ` (životné a úrazové ${eurMonthly(PS.lifePremiums(s))})` : "")
+      : "Pridajte poistné zmluvy, ktoré klient už má — životné, úrazové, majetok, vozidlá a ďalšie.";
+    $$("#contracts [data-cid]").forEach((el, i) => {
+      const c = s.contracts[i];
+      if (!c) return;
+      $("[data-cmeta]", el).textContent = contractMeta(s, c);
+      $("[data-cprem]", el).textContent = eurMonthly(PS.contractMonthly(c));
+    });
+    const lp = $('[data-path="finances.insurancePremiums"]');
+    if (life.length) {
+      lp.disabled = true;
+      lp.value = fmtInput(Math.round(PS.lifePremiums(s) * 100) / 100);
+      $("#life-prem-hint").textContent = `Súčet ${life.length} ${plural(life.length, "zmluvy", "zmlúv", "zmlúv")} zo sekcie Existujúce zmluvy.`;
+    } else {
+      if (lp.disabled) { lp.disabled = false; lp.value = fmtInput(s.finances.insurancePremiums || ""); }
+      $("#life-prem-hint").textContent = "Ak zadáte zmluvy v kroku 2, vypočíta sa z nich.";
+    }
+  }
+
+  $("#add-contract").addEventListener("click", () => {
+    const type = $("#contract-type").value;
+    const kind = PS.contractType(type).kind;
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const s = PS.update((st) => st.contracts.push({
+      id, type, provider: "", number: "", insured: "client", subject: "", sumInsured: 0,
+      premium: 0, frequency: kind === "vehicle" || kind === "property" ? 1 : 12, startDate: "", endDate: "", riders: {},
+    }));
+    openContracts.add(id);
+    renderContracts(s);
+    refreshDerived(s);
+    const el = $(`[data-cid="${id}"] [data-ckey="provider"]`);
+    if (el) { el.focus(); el.scrollIntoView({ block: "center", behavior: "smooth" }); }
+  });
+
+  function onContractEdit(e) {
+    const el = e.target;
+    if (!el.dataset || el.dataset.ci == null) return;
+    const i = +el.dataset.ci;
+    const key = el.dataset.ckey;
+    const s = PS.update((st) => {
+      const c = st.contracts[i];
+      if (el.dataset.rider) c.riders = { ...(c.riders || {}), [el.dataset.rider]: parseNum(el.value) || 0 };
+      else c[key] = el.dataset.type === "number" ? parseNum(el.value) || 0 : el.value;
+    });
+    // Zmena typu alebo poisteného mení polia a pripoistenia → prekresliť.
+    if (key === "type" || key === "insured") renderContracts(s);
+    refreshDerived(s);
+  }
+  $("#contracts").addEventListener("input", onContractEdit);
+  $("#contracts").addEventListener("change", (e) => { if (e.target.tagName === "SELECT") onContractEdit(e); });
+  // toggle nebubleuje — zachytávame ho vo fáze capture, aby sa pamätalo, ktoré zmluvy sú otvorené.
+  $("#contracts").addEventListener("toggle", (e) => {
+    const id = e.target.dataset && e.target.dataset.cid;
+    if (id) e.target.open ? openContracts.add(id) : openContracts.delete(id);
+  }, true);
+  $("#contracts").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-remove-contract]");
+    if (!b) return;
+    const i = +b.dataset.removeContract;
+    const c = PS.load().contracts[i];
+    if (!confirm(`Odstrániť zmluvu „${PS.contractType(c.type).label}“${c.provider ? ` (${c.provider})` : ""}?`)) return;
+    const s = PS.update((st) => { st.contracts.splice(i, 1); });
+    renderContracts(s);
+    refreshDerived(s);
+  });
+
+  // ------------------------------------------------------------ Kalkulačky
+  const CALCS = [
+    { key: "investments", title: "Investičná kalkulačka",
+      metrics: (m) => [
+        ["Ponuka", esc(m.offerName || "bez názvu")],
+        ["Vklad", `${eur(m.principal)} + ${eur(m.monthly)} / mes.`],
+        [`Hodnota o ${m.years} r.`, eur(m.finalValue)],
+      ] },
+    { key: "retirement", title: "Dôchodková kalkulačka",
+      metrics: (m) => {
+        // Rovnaké zaokrúhlenie ako v súhrne a PDF.
+        const income = [m.statePension, m.p2Renta, m.p3Renta, m.renta].reduce((t, v) => t + Math.round(v || 0), 0);
+        const gap = Math.round(m.target) - income;
+        return [
+          ["Cieľový príjem", `${eur(m.target)} / mes.`],
+          ["Očakávaný príjem", `${eur(income)} / mes.`],
+          [gap > 0 ? "Chýba" : "Rezerva", `${eur(Math.abs(gap))} / mes.`],
+        ];
+      } },
+    { key: "security", title: "Životné poistenie",
+      metrics: (m) => {
+        const death = (m.adult || []).find((r) => r.key === "death");
+        return [
+          ["Smrť", death ? eur(death.value) : "—"],
+          ["Pripoistenia", `${(m.adult || []).length}${m.child ? ` + dieťa ${m.child.length}` : ""}`],
+          ["Poistné z ponuky", m.premium ? `${eur(m.premium)} / mes.` : "nezadané"],
+        ];
+      } },
+  ];
+
+  // Karty sú v HTML; tu sa len doplní stav, výsledky a text tlačidla.
+  function renderCalcs(s) {
+    for (const c of CALCS) {
+      const card = $(`[data-calc="${c.key}"]`);
+      const mod = s.modules[c.key];
+      const m = mod && mod.summary;
+      const status = $("[data-status]", card);
+      status.className = `chip ${m ? "done" : "todo"}`;
+      status.textContent = m ? `Uložené ${fmtTime(mod.savedAt)}` : "Nevyplnené";
+      const metrics = $("[data-metrics]", card);
+      metrics.hidden = !m;
+      metrics.innerHTML = m ? c.metrics(m).map(([l, v]) => `<div><span>${l}</span><strong class="mono">${v}</strong></div>`).join("") : "";
+      $("[data-extra]", card).innerHTML = c.key === "investments" && m ? `
+        <label class="check" style="font-size:13px"><input type="checkbox" id="link-retirement"${s.links.investmentForRetirement ? " checked" : ""}>
+          Investícia slúži aj na dorovnanie dôchodku</label>` : "";
+      $("[data-open]", card).textContent = m ? "Upraviť →" : "Otvoriť →";
+      $("[data-clear]", card).hidden = !m;
+    }
+  }
+
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-clear]");
+    if (!b) return;
+    const label = CALCS.find((c) => c.key === b.dataset.clear).title;
+    if (!confirm(`Odstrániť výsledky kalkulačky „${label}“ z plánu?`)) return;
+    PS.clearModule(b.dataset.clear);
+    refreshDerived(PS.load());
+  });
+  document.addEventListener("change", (e) => {
+    if (e.target.id !== "link-retirement") return;
+    refreshDerived(PS.update((st) => { st.links.investmentForRetirement = e.target.checked; }));
+  });
+
+  function renderChecklist(s) {
+    const withCalc = { retirement: true, investments: true, security: true };
+    const goals = PS.GOAL_KEYS.filter((k) => PS.isGoalSelected(s, k));
+    const items = [["Parametre klienta (meno a príjem)", PS.hasProfile(s), "doplňte v kroku 1"]];
+    if (!goals.length) items.push(["Ciele klienta", false, "pridajte aspoň jeden cieľ v kroku 3"]);
+    for (const k of goals) {
+      const done = !!(s.modules[k] && s.modules[k].summary);
+      items.push([`Cieľ: ${GOAL_TITLES[k]}`, done || !withCalc[k],
+        !withCalc[k] ? "kalkulačku pripravujeme — v PDF bude uvedený ako cieľ" : done ? "" : "kalkulačka ešte nie je vyplnená"]);
+    }
+    $("#checklist").innerHTML = items.map(([t, ok, note]) =>
+      `<li><span class="${ok ? "ok" : "no"}" aria-hidden="true">${ok ? "✓" : "○"}</span>${esc(t)}` +
+      `<span class="sr-only">${ok ? " — hotové" : " — chýba"}</span>${note ? ` <span class="muted">— ${note}</span>` : ""}</li>`).join("");
+  }
+
+  // ------------------------------------------------------------ Nástroje
+  $("#btn-sample").addEventListener("click", () => {
+    const s = PS.load();
+    if ((PS.clientName(s) || Object.keys(s.modules).length) && !confirm("Prepísať aktuálneho klienta ukážkovými údajmi?")) return;
+    fillForm(PS.replace(JSON.parse(JSON.stringify(window.SAMPLE_STATE))));
+  });
+  $("#btn-reset").addEventListener("click", () => {
+    if (!confirm("Začať nového klienta? Aktuálne údaje sa vymažú (zálohu si môžete najprv uložiť).")) return;
+    const branding = PS.load().branding, advisor = PS.load().advisor;
+    PS.reset();
+    // Poradca a branding zostávajú pre ďalšieho klienta.
+    fillForm(PS.update((st) => { st.branding = branding; st.advisor = advisor; }));
+  });
+  $("#btn-export").addEventListener("click", () => {
+    const s = PS.load();
+    const slug = (PS.clientName(s) || "klient").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([PS.exportJson()], { type: "application/json" }));
+    a.download = `financny-plan-${slug}-${s.meta.date}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+  $("#btn-import").addEventListener("click", () => $("#import-file").click());
+  $("#import-file").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      fillForm(PS.replace(JSON.parse(await file.text())));
+    } catch (err) {
+      alert("Súbor sa nepodarilo načítať: " + err.message);
+    }
+    e.target.value = "";
+  });
+
+  // Návrat z kalkulačky (aj cez tlačidlo Späť) a zmeny v iných kartách.
+  window.addEventListener("pageshow", () => fillForm(PS.load()));
+  PS.onChange((s) => refreshDerived(s));
+})();
+</script>
+</body>
+</html>

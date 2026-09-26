@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Súhrn finančného plánu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.23/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.23/vfs_fonts.js"></script>
+<script src="js/embed-height.js"></script>
+<script src="js/plan-store.js"></script>
+<script src="js/plan-engine.js"></script>
+<script src="js/plan-pdf.js"></script>
+<style>
+  :root {
+    --bg: #f5f7f5; --surface: #ffffff; --text-primary: #10231f; --text-secondary: #4b5b57; --text-muted: #7c8b86;
+    --accent: #0f6b5c; --accent-soft: #e3f1ec; --border: rgba(16,35,31,0.10); --border-strong: rgba(16,35,31,0.16);
+    --danger: #c23b32; --warn-soft: #fdf4e3; --warn-ink: #7a5310;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b1211; --surface: #141c1a; --text-primary: #f5f7f6; --text-secondary: #a9b6b2; --text-muted: #7f8d89;
+      --accent: #35b79f; --accent-soft: rgba(53,183,159,0.16); --border: rgba(255,255,255,0.10); --border-strong: rgba(255,255,255,0.16);
+      --danger: #e2635f; --warn-soft: rgba(224,169,74,0.14); --warn-ink: #e8c07a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b1211; --surface: #141c1a; --text-primary: #f5f7f6; --text-secondary: #a9b6b2; --text-muted: #7f8d89;
+    --accent: #35b79f; --accent-soft: rgba(53,183,159,0.16); --border: rgba(255,255,255,0.10); --border-strong: rgba(255,255,255,0.16);
+    --danger: #e2635f; --warn-soft: rgba(224,169,74,0.14); --warn-ink: #e8c07a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text-primary); font-family: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1120px; margin: 0 auto; padding: 24px 16px 64px; display: flex; flex-direction: column; gap: 28px; }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  .back { color: var(--accent); font-weight: 800; text-decoration: none; }
+  .eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  h1 { font-size: clamp(28px, 4vw, 40px); font-weight: 800; margin: 6px 0 4px; }
+  h2 { font-size: 20px; font-weight: 800; margin: 0 0 12px; }
+  h3 { font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 12px; }
+  p { margin: 0; }
+  .muted { color: var(--text-muted); }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; min-width: 0; }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
+  .kpis { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); }
+  .kpi { background: var(--accent-soft); border-radius: 12px; padding: 14px 16px; }
+  .kpi span { display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); }
+  .kpi strong { display: block; font-size: 24px; margin: 2px 0; }
+  .kpi small { color: var(--text-secondary); font-size: 12px; }
+  .kpi.neg strong { color: var(--danger); }
+  .warn { background: var(--warn-soft); color: var(--warn-ink); border-radius: 12px; padding: 12px 16px; font-size: 14px; font-weight: 600; }
+  .warn a { color: inherit; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); font-weight: 800; padding: 6px 8px 8px 0; border-bottom: 1px solid var(--border-strong); }
+  td { padding: 9px 8px 9px 0; border-bottom: 1px solid var(--border); vertical-align: top; }
+  td.n, th.n { text-align: right; white-space: nowrap; }
+  tr.total td { font-weight: 800; border-top: 1px solid var(--border-strong); }
+  .table-wrap { overflow-x: auto; }
+  .prio { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; white-space: nowrap; }
+  .prio::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+  .detail { color: var(--text-secondary); font-size: 13px; margin-top: 2px; }
+  .areas { display: grid; gap: 10px; }
+  .area { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .area:last-child { border-bottom: none; }
+  .area b { font-weight: 800; }
+  .area .val { color: var(--text-secondary); font-size: 14px; text-align: right; }
+  .pdf { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  @media (max-width: 760px) { .pdf { grid-template-columns: 1fr; } }
+  label.f { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-bottom: 12px; }
+  input[type=text] { font: inherit; font-size: 15px; font-weight: 600; color: var(--text-primary); background: var(--bg); border: 1px solid var(--border-strong); border-radius: 8px; padding: 8px 10px; }
+  input[type=color] { width: 56px; height: 36px; border: 1px solid var(--border-strong); border-radius: 8px; background: none; padding: 2px; }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .logo-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .logo-row img { max-height: 36px; max-width: 140px; background: #fff; border-radius: 6px; padding: 2px; }
+  button { font: inherit; font-size: 14px; font-weight: 700; border-radius: 10px; padding: 10px 16px; cursor: pointer; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-primary); }
+  .btn-accent { background: var(--accent); border-color: var(--accent); color: #fff; font-size: 16px; padding: 13px 22px; }
+  button:disabled { opacity: .6; cursor: progress; }
+  .btn-ghost { border-color: transparent; background: transparent; color: var(--text-secondary); padding: 6px 8px; }
+  .buttons { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .chip { background: var(--accent-soft); border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; }
+  iframe { width: 100%; height: 85vh; border: 1px solid var(--border); border-radius: 16px; background: #fff; display: none; }
+  .error { color: var(--danger); font-weight: 700; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="plan.html">← Späť na plán</a>
+
+  <div id="env-warning" class="warn" role="alert" hidden>
+    Stránka je otvorená v náhľade, ktorý nevie načítať ostatné súbory plánu. Otvorte <code>plan.html</code> v bežnom prehliadači
+    (dvojklikom v Prieskumníkovi — otvorí sa v Edge alebo Chrome) alebo cez webovú adresu.
+  </div>
+  <script>
+    if (location.protocol === "data:" || !window.PlanStore) document.getElementById("env-warning").hidden = false;
+  </script>
+
+  <header>
+    <div class="eyebrow">Súhrn finančného plánu</div>
+    <h1 id="title">—</h1>
+    <p class="muted" id="subtitle"></p>
+  </header>
+
+  <div id="warnings" class="warn" hidden></div>
+
+  <section aria-label="Kľúčové ukazovatele"><div class="kpis" id="kpis"></div></section>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Mesačný cashflow</h2>
+      <div class="table-wrap"><table id="cashflow"></table></div>
+    </section>
+    <section class="card">
+      <h2>Ciele klienta</h2>
+      <div class="areas" id="areas"></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Akčný plán</h2>
+    <div class="table-wrap"><table id="actions"></table></div>
+  </section>
+
+  <section class="card" aria-labelledby="pdf-h">
+    <h2 id="pdf-h">PDF pre klienta</h2>
+    <div class="pdf">
+      <div>
+        <h3>Branding</h3>
+        <label class="f">Názov spoločnosti<input type="text" id="b-company"></label>
+        <label class="f">Hlavná farba<input type="color" id="b-color"></label>
+        <label class="f">Logo (PNG, JPG alebo SVG)
+          <span class="logo-row"><input type="file" id="b-logo" accept="image/png,image/jpeg,image/svg+xml"><img id="b-logo-preview" alt="Náhľad loga" hidden><button type="button" class="btn-ghost" id="b-logo-remove" hidden>Odstrániť logo</button></span>
+        </label>
+        <label class="f">Poznámka v pätičke<input type="text" id="b-footer" placeholder="napr. www.vasaspolocnost.sk"></label>
+      </div>
+      <div>
+        <h3>Obsah dokumentu</h3>
+        <p class="muted" style="font-size:14px">Do PDF sa dostanú len oblasti s údajmi. Nevyplnené kalkulačky sa vynechajú bez prázdnych miest.</p>
+        <div class="chips" id="sections"></div>
+        <div class="buttons" style="margin-top:20px">
+          <button type="button" class="btn-accent" id="download">Stiahnuť PDF</button>
+          <button type="button" id="preview">Náhľad</button>
+          <span id="status" class="muted" role="status"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <iframe id="frame" title="Náhľad PDF"></iframe>
+</main>
+
+<script>
+(function () {
+  const $ = (s) => document.querySelector(s);
+  const PS = window.PlanStore;
+  if (!PS || !window.PlanEngine || !window.FinancialPlanPdf) return;
+  const nf = new Intl.NumberFormat("sk-SK", { maximumFractionDigits: 0 });
+  const eur = (v) => (typeof v === "number" && isFinite(v) ? nf.format(Math.round(v)) + " €" : "—");
+  const signed = (v) => (v > 0 ? "+" : v < 0 ? "−" : "") + eur(Math.abs(v));
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const fmtDate = (iso) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ""); return m ? `${+m[3]}. ${+m[2]}. ${m[1]}` : ""; };
+
+  const MODULE_LABEL = { housing: "Bývanie a reality", investments: "Sporenie a investície", security: "Zabezpečenie", retirement: "Renta", incomeScaling: "Navýšenie príjmu", general: "Všeobecné" };
+  const PRIO = { high: ["Vysoká", "#d03b3b"], medium: ["Stredná", "#e0a020"], low: ["Nízka", "#b7c1be"] };
+
+  let state, built;
+
+  function render() {
+    state = PS.load();
+    built = window.PlanEngine.buildReport(state);
+    const r = built.report;
+    const name = PS.clientName(state);
+    $("#title").textContent = name || "Klient bez mena";
+    document.title = name ? `Súhrn — ${name}` : "Súhrn finančného plánu";
+    $("#subtitle").textContent = `Plán k ${fmtDate(state.meta.date)}${state.advisor.name ? ` · poradca ${state.advisor.name}` : ""}`;
+
+    // Upozornenia na chýbajúce údaje
+    const w = $("#warnings");
+    w.hidden = !built.warnings.length;
+    w.innerHTML = built.warnings.map(esc).join("<br>") + (built.warnings.length ? ` <a href="plan.html#ciele">Doplniť v pláne →</a>` : "");
+
+    // KPI
+    const cf = r.summary.cashflow, after = r.summary.cashflowAfterPlan, nw = r.summary.netWorth;
+    const ef = r.security && r.security.emergencyFund;
+    const kpis = [
+      ["Čistý príjem domácnosti", eur(cf.netIncome), "mesačne"],
+      ["Voľný cashflow", signed(cf.free), after ? `po realizácii plánu ${signed(after.free)}` : "mesačne", (after ? after.free : cf.free) < 0],
+      ["Čistý majetok", eur(nw.net), `záväzky ${eur(nw.liabilities)}`],
+    ];
+    if (ef && ef.monthlyEssentialExpenses > 0) {
+      kpis.push(["Finančná rezerva", `${(ef.current / ef.monthlyEssentialExpenses).toFixed(1).replace(".", ",")} mes.`, `cieľ ${ef.targetMonths} mes. = ${eur(ef.target)}`, ef.current < ef.target / 2]);
+    }
+    $("#kpis").innerHTML = kpis.map(([l, v, s, neg]) =>
+      `<div class="kpi${neg ? " neg" : ""}"><span>${l}</span><strong class="mono">${v}</strong><small>${s}</small></div>`).join("");
+
+    // Cashflow dnes vs. po pláne
+    const rows = [
+      ["Čistý príjem", "netIncome", 1],
+      ["Životné náklady", "livingExpenses", -1],
+      ["Splátky úverov", "debtPayments", -1],
+      ["Poistenie", "insurancePremiums", -1],
+      ["Investície a sporenie", "investmentContributions", -1],
+    ];
+    $("#cashflow").innerHTML =
+      `<thead><tr><th>Položka</th><th class="n">Dnes</th>${after ? '<th class="n">Po pláne</th>' : ""}</tr></thead><tbody>` +
+      rows.map(([l, k, sign]) => `<tr><td>${l}</td><td class="n mono">${signed(sign * cf[k])}</td>${after ? `<td class="n mono">${signed(sign * after[k])}</td>` : ""}</tr>`).join("") +
+      `<tr class="total"><td>Voľné prostriedky</td><td class="n mono">${signed(cf.free)}</td>${after ? `<td class="n mono">${signed(after.free)}</td>` : ""}</tr></tbody>`;
+
+    // Oblasti
+    const active = window.FinancialPlanPdf.activeSections(r);
+    const ret = r.retirement, sec = r.security, inv = r.investments;
+    // Ciele klienta: pridané ciele so stavom, nepridané len ako poznámka.
+    const detail = {
+      housing: () => (active.includes("housing") ? "hypotéky z profilu" : "kalkulačku pripravujeme"),
+      retirement: () => (ret ? `cieľ ${eur(ret.targetMonthlyToday)} · očakávané ${eur(Object.values(ret.sources).reduce((a, b) => a + (b || 0), 0))} / mes.` : "kalkulačka nevyplnená"),
+      investments: () => (inv && inv.accounts.length ? `${inv.accounts.length} ${inv.accounts.length === 1 ? "účet" : "účty"} · vklady ${eur(inv.accounts.reduce((t, a) => t + a.monthlyContribution + (a.employerContribution || 0), 0))} / mes.` : "kalkulačka nevyplnená"),
+      security: () => {
+        const parts = [];
+        if (sec && sec.people.length) parts.push(`${sec.people.length} ${sec.people.length === 1 ? "osoba" : "osoby"}`);
+        if (sec && sec.contracts && sec.contracts.length) parts.push(`${sec.contracts.length} ${sec.contracts.length === 1 ? "zmluva" : sec.contracts.length < 5 ? "zmluvy" : "zmlúv"}`);
+        if (sec && sec.premiumBudget && sec.premiumBudget.proposed != null) parts.push(`nové životné poistenie ${eur(sec.premiumBudget.proposed)} / mes.`);
+        return parts.join(" · ") || (ef ? "finančná rezerva" : "kalkulačka nevyplnená");
+      },
+      incomeScaling: () => "kalkulačku pripravujeme",
+    };
+    const HREF = { retirement: "dochodkova-kalkulacka.html?plan=1", investments: "index.html?plan=1", security: "zivotna-kalkulacka.html?plan=1" };
+    const goals = r.clientGoals || [];
+    const notAdded = PS.GOAL_KEYS.filter((k) => !goals.some((g) => g.key === k)).map((k) => MODULE_LABEL[k]);
+    $("#areas").innerHTML = (goals.length
+      ? goals.map((g) => `<div class="area"><span><b>${esc(g.title)}</b>${g.note ? `<div class="detail">${esc(g.note)}</div>` : ""}</span>` +
+          `<span class="val">${esc(detail[g.key]())}${HREF[g.key] ? ` · <a href="${HREF[g.key]}">upraviť</a>` : ""}</span></div>`).join("")
+      : `<p class="muted">Klient zatiaľ nemá pridaný žiadny cieľ.</p>`) +
+      (notAdded.length ? `<p class="muted" style="font-size:13px;margin-top:8px">Nepridané (nebudú v PDF): ${notAdded.join(", ")} · <a href="plan.html#ciele">upraviť ciele</a></p>` : "");
+
+    // Akčný plán
+    const order = { high: 0, medium: 1, low: 2 };
+    const actions = r.actions.filter((a) => a.module === "general" || active.includes(a.module))
+      .map((a, i) => ({ a, i })).sort((x, y) => order[x.a.priority] - order[y.a.priority] || x.i - y.i).map((x) => x.a);
+    $("#actions").innerHTML = actions.length
+      ? `<thead><tr><th>Priorita</th><th>Oblasť</th><th>Opatrenie</th><th class="n">Vplyv / mes.</th></tr></thead><tbody>` +
+        actions.map((a) => `<tr>
+          <td><span class="prio" style="--c:${PRIO[a.priority][1]}">${PRIO[a.priority][0]}</span></td>
+          <td>${MODULE_LABEL[a.module] || a.module}</td>
+          <td><strong>${esc(a.title)}</strong>${a.detail ? `<div class="detail">${esc(a.detail)}</div>` : ""}</td>
+          <td class="n mono">${a.monthlyImpact != null ? signed(a.monthlyImpact) : "—"}</td></tr>`).join("") + "</tbody>"
+      : `<tbody><tr><td class="muted">Zatiaľ žiadne odporúčania — doplňte parametre a kalkulačky v pláne.</td></tr></tbody>`;
+
+    // Obsah PDF
+    $("#sections").innerHTML = ["Zhrnutie a akčný plán", ...active.map((k) => MODULE_LABEL[k]), "Predpoklady a podpisy"]
+      .map((t) => `<span class="chip">${t}</span>`).join("");
+
+    // Branding
+    const b = state.branding;
+    $("#b-company").value = b.companyName || state.advisor.company || "";
+    $("#b-color").value = b.primary || "#0f6b5c";
+    $("#b-footer").value = b.footerNote || "";
+    const hasImg = b.logo && !String(b.logo).trim().startsWith("<svg");
+    $("#b-logo-preview").hidden = !hasImg;
+    if (hasImg) $("#b-logo-preview").src = b.logo;
+    $("#b-logo-remove").hidden = !b.logo;
+  }
+
+  // ------------------------------------------------------------ Branding
+  const saveBranding = (patch) => { PS.update((s) => Object.assign(s.branding, patch)); };
+  $("#b-company").addEventListener("input", (e) => saveBranding({ companyName: e.target.value }));
+  $("#b-color").addEventListener("input", (e) => saveBranding({ primary: e.target.value }));
+  $("#b-footer").addEventListener("input", (e) => saveBranding({ footerNote: e.target.value }));
+  $("#b-logo").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 800 * 1024) { setStatus("Logo je príliš veľké (max. 800 kB).", true); return; }
+    const logo = file.type === "image/svg+xml" ? await file.text() : await window.FinancialPlanPdf.fileToDataUrl(file);
+    saveBranding({ logo });
+    render();
+  });
+  $("#b-logo-remove").addEventListener("click", () => { saveBranding({ logo: null }); $("#b-logo").value = ""; render(); });
+
+  function tint(hex, amount) {
+    const n = parseInt(hex.slice(1), 16);
+    const mix = (c) => Math.round(c + (255 - c) * amount).toString(16).padStart(2, "0");
+    return "#" + mix(n >> 16) + mix((n >> 8) & 255) + mix(n & 255);
+  }
+  function pdfOptions() {
+    const b = PS.load().branding;
+    const primary = b.primary || "#0f6b5c";
+    return { brand: { primary, primarySoft: tint(primary, 0.88), companyName: $("#b-company").value.trim(), footerNote: b.footerNote || "", logo: b.logo || null } };
+  }
+
+  // ------------------------------------------------------------ PDF
+  function setStatus(text, isError) { $("#status").textContent = text; $("#status").className = isError ? "error" : "muted"; }
+  async function run(button, fn) {
+    button.disabled = true;
+    setStatus("Generujem PDF…");
+    try { await fn(); setStatus("Hotovo."); }
+    catch (err) { console.error(err); setStatus("PDF sa nepodarilo vytvoriť: " + err.message, true); }
+    finally { button.disabled = false; }
+  }
+  const currentReport = () => window.PlanEngine.buildReport(PS.load()).report;
+
+  $("#download").addEventListener("click", (e) => run(e.currentTarget, () => window.FinancialPlanPdf.download(currentReport(), pdfOptions())));
+  let lastUrl = null;
+  $("#preview").addEventListener("click", (e) => run(e.currentTarget, async () => {
+    const blob = await window.FinancialPlanPdf.getBlob(currentReport(), pdfOptions());
+    if (lastUrl) URL.revokeObjectURL(lastUrl);
+    lastUrl = URL.createObjectURL(blob);
+    $("#frame").src = lastUrl;
+    $("#frame").style.display = "block";
+    $("#frame").scrollIntoView({ behavior: "smooth" });
+  }));
+
+  window.addEventListener("pageshow", render);
+  PS.onChange(render);
+})();
+</script>
+</body>
+</html>

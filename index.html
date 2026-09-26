@@ -162,17 +162,19 @@
 if (window.parent !== window) {
   let lastHeight = 0;
   const postHeight = () => {
-    const h = document.documentElement.scrollHeight;
+    const h = Math.ceil(document.body.getBoundingClientRect().height); // výška obsahu, aby sa iframe vedel aj zmenšiť
     if (h !== lastHeight) {
       lastHeight = h;
       window.parent.postMessage({ type: "investicna-kalkulacka:height", height: h }, "*");
     }
   };
   new ResizeObserver(postHeight).observe(document.body);
+  setInterval(postHeight, 600); // poistka pre iframe z inej domény
   window.addEventListener("load", postHeight);
 }
 </script>
 
+<script src="js/plan-store.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
@@ -180,6 +182,24 @@ if (window.parent !== window) {
 
 <script type="text/babel" data-type="module">
 const { useState, useMemo, useRef, useEffect } = React;
+
+// Prepojenie s finančným plánom (plan.html) — aktívne len pri otvorení s ?plan=1.
+// Vstupy sa načítajú z plánu a priebežne sa doň ukladajú aj s výsledkom.
+const PLAN = window.PlanStore && window.PlanStore.isPlanMode() ? window.PlanStore : null;
+const INV_DEFAULTS = { x: 10000, m: 150, y: 1.5, p: 3, k: 24, z: 6.5, n: 10, offerName: "" };
+const INV_INIT = PLAN ? PLAN.initialInputs("investments", INV_DEFAULTS) : INV_DEFAULTS;
+if (PLAN) PLAN.mountBar("Sporenie a investície", "investments");
+
+// Výsledok pre plán: kľúčové čísla a ročné body vývoja (Ponuka A).
+function summarizeInvestment(calc, offerName) {
+  return {
+    offerName: offerName.trim(),
+    principal: calc.principal, monthly: calc.monthlyContribution,
+    returnPct: calc.returnPct, costPct: calc.costPct, entryFeePct: calc.entryFeePct, years: calc.years,
+    finalValue: calc.finalValue, totalInvested: calc.totalInvested, netProfit: calc.netProfit, costs: calc.costs,
+    yearly: calc.series.filter((s) => s.m % 12 === 0).map((s) => ({ year: s.years, invested: s.invested, value: s.value })),
+  };
+}
 
 const fmtEUR = (n) => new Intl.NumberFormat("sk-SK", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 const fmtEURprecise = (n) => new Intl.NumberFormat("sk-SK", { style: "currency", currency: "EUR", maximumFractionDigits: 2 }).format(n);
@@ -824,15 +844,15 @@ function PrintDocument({ printRef, offerName, compareEnabled, calcA, calcB, bett
 }
 
 function App() {
-  const [x, setX] = useState(10000);
-  const [m, setM] = useState(150);
-  const [y, setY] = useState(1.5);
-  const [p, setP] = useState(3);
-  const [k, setK] = useState(24);
-  const [z, setZ] = useState(6.5);
-  const [n, setN] = useState(10);
+  const [x, setX] = useState(INV_INIT.x);
+  const [m, setM] = useState(INV_INIT.m);
+  const [y, setY] = useState(INV_INIT.y);
+  const [p, setP] = useState(INV_INIT.p);
+  const [k, setK] = useState(INV_INIT.k);
+  const [z, setZ] = useState(INV_INIT.z);
+  const [n, setN] = useState(INV_INIT.n);
 
-  const [offerName, setOfferName] = useState("");
+  const [offerName, setOfferName] = useState(INV_INIT.offerName);
   const [compareEnabled, setCompareEnabled] = useState(false);
   const [x2, setX2] = useState(10000);
   const [m2, setM2] = useState(150);
@@ -847,6 +867,13 @@ function App() {
 
   const calcA = useMemo(() => computeScenario({ x, m, y, p, k, z, n }), [x, m, y, p, k, z, n]);
   const calcB = useMemo(() => computeScenario({ x: x2, m: m2, y: y2, p: p2, k: k2, z: z2, n: n2 }), [x2, m2, y2, p2, k2, z2, n2]);
+
+  // Do plánu ide Ponuka A (pri porovnaní je to prvá ponuka).
+  useEffect(() => {
+    if (!PLAN) return;
+    const t = setTimeout(() => PLAN.saveModule("investments", { x, m, y, p, k, z, n, offerName }, summarizeInvestment(calcA, offerName)), 300);
+    return () => clearTimeout(t);
+  }, [calcA, offerName]);
 
   const getComputedStyleColor = (varName) => {
     if (typeof window === "undefined") return "#999";

@@ -225,10 +225,12 @@ if (window.parent !== window) {
     }
   };
   new ResizeObserver(postHeight).observe(document.body);
+  setInterval(postHeight, 600); // poistka pre iframe z inej domény
   window.addEventListener("load", postHeight);
 }
 </script>
 
+<script src="js/plan-store.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
@@ -767,6 +769,12 @@ function RidersCard({ calc, setRider, resetRiders, compare, setCompare }) {
         </div>
       </div>
 
+      {compare && coverCount(calc.mode) > 0 && (
+        <p className="text-xs rounded-lg px-3 py-2 mb-1" style={{ background: "var(--accent-soft)", color: "var(--text-secondary)", border: "1px solid var(--border)" }}>
+          Stĺpec „Aktuálna zmluva“ je prevzatý z existujúcich zmlúv vo finančnom pláne ({coverCount(calc.mode)} {coverCount(calc.mode) === 1 ? "zmluva" : "zmluvy"}).
+          Sumy upravujte v pláne v časti Existujúce zmluvy — pri ďalšom otvorení sa odtiaľ znova načítajú.
+        </p>
+      )}
       {compare && (
         <div className="hidden md:flex text-xs font-semibold uppercase tracking-wide gap-3 pb-1" style={{ color: "var(--text-muted)" }}>
           <span className="flex-1"></span>
@@ -974,11 +982,43 @@ const DEFAULTS = {
   adh: DEFAULT_ADH, vvz: DEFAULT_VVZ,
 };
 
+// Prepojenie s finančným plánom (plan.html) — aktívne len pri otvorení s ?plan=1.
+// Vek, príjem, úvery, partner, deti a živiteľ sa berú z profilu klienta.
+const PLAN = window.PlanStore && window.PlanStore.isPlanMode() ? window.PlanStore : null;
+if (PLAN) PLAN.mountBar("Zabezpečenie", "security");
+const SAVED_SECURITY = PLAN ? PLAN.getModule("security") : null;
+// Súčasné krytie z existujúcich zmlúv zadaných v pláne (klient a prvé dieťa).
+const CONTRACT_COVER = PLAN ? PLAN.contractCover(PLAN.load()) : null;
+const coverCount = (mode) => (CONTRACT_COVER ? CONTRACT_COVER[mode + "Count"] : 0);
+
+// Uložené pripoistenia doplnené o prípadné nové kľúče; stĺpec „Aktuálna zmluva“
+// sa pri existujúcich zmluvách prepíše ich súčtom a zapnú sa pripoistenia, ktoré zmluvy obsahujú.
+function initialRiderState() {
+  const fresh = { adult: defaultRiderState("adult"), child: defaultRiderState("child") };
+  const saved = SAVED_SECURITY && SAVED_SECURITY.extra && SAVED_SECURITY.extra.riderState;
+  for (const mode of ["adult", "child"]) {
+    for (const k of Object.keys(fresh[mode])) {
+      if (saved && saved[mode] && saved[mode][k]) fresh[mode][k] = { ...fresh[mode][k], ...saved[mode][k] };
+      if (coverCount(mode)) {
+        const current = CONTRACT_COVER[mode][k] || 0;
+        fresh[mode][k] = { ...fresh[mode][k], current, on: fresh[mode][k].on || current > 0 };
+      }
+    }
+  }
+  return fresh;
+}
+
+const riderSummary = (c) => c.riderDefs.filter((r) => c.chosen[r.key].on).map((r) => ({
+  key: r.key, label: r.label, unit: r.unit, value: c.chosen[r.key].value, current: c.chosen[r.key].current, rec: c.rec[r.key],
+}));
+
 function App() {
-  const [v, setV] = useState(DEFAULTS);
-  const [riderState, setRiderState] = useState({ adult: defaultRiderState("adult"), child: defaultRiderState("child") });
-  const [compare, setCompare] = useState(false);
-  const [clientName, setClientName] = useState("");
+  const [v, setV] = useState(() => (PLAN ? PLAN.initialInputs("security", DEFAULTS) : DEFAULTS));
+  const [riderState, setRiderState] = useState(initialRiderState);
+  const [compare, setCompare] = useState(() => !!(SAVED_SECURITY && SAVED_SECURITY.extra && SAVED_SECURITY.extra.compare) || coverCount("adult") + coverCount("child") > 0);
+  // Poistenie dieťaťa ide do plánu, len ak bol režim „Dieťa“ aspoň raz otvorený.
+  const [childUsed, setChildUsed] = useState(() => !!(SAVED_SECURITY && SAVED_SECURITY.extra && SAVED_SECURITY.extra.childUsed));
+  const [clientName, setClientName] = useState(() => (PLAN ? PLAN.clientName(PLAN.load()) : ""));
   const [exporting, setExporting] = useState(false);
   const printRef = useRef(null);
 
@@ -994,6 +1034,23 @@ function App() {
   });
 
   const calc = useMemo(() => compute({ ...v, riders: riderState[v.mode], compare }), [v, riderState, compare]);
+
+  useEffect(() => { if (v.mode === "child") setChildUsed(true); }, [v.mode]);
+
+  useEffect(() => {
+    if (!PLAN) return;
+    const t = setTimeout(() => {
+      const adult = compute({ ...v, mode: "adult", riders: riderState.adult, compare });
+      const child = compute({ ...v, mode: "child", riders: riderState.child, compare });
+      PLAN.saveModule("security", v, {
+        net: adult.net, gross: adult.gross, loans: adult.loans, premium: adult.premium,
+        budgetLo: adult.budgetLo, budgetHi: adult.budgetHi, familyNeed: adult.familyNeed, deathSum: adult.deathSum,
+        adult: riderSummary(adult),
+        child: childUsed ? riderSummary(child) : null, childAge: v.childAge,
+      }, { riderState, compare, childUsed });
+    }, 300);
+    return () => clearTimeout(t);
+  }, [v, riderState, compare, childUsed]);
 
   const cssColor = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "#999";
   const colors = { state: cssColor("--slot-state"), insurance: cssColor("--slot-insurance"), missing: cssColor("--slot-missing") };
