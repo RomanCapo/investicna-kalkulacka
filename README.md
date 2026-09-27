@@ -40,6 +40,17 @@ Jednoduchá single-page kalkulačka (React cez CDN + Tailwind CSS, žiadny build
 - Potreba rodiny pri úmrtí živiteľa, rozpočet na poistné (5–10 % netto), porovnanie s aktuálnou zmluvou
 - Režim pre dieťa, export do PDF
 
+## Hypotekárna kalkulačka
+
+`hypotekarna-kalkulacka.html` — nová alebo existujúca hypotéka a predčasné splatenie v rovnakom dizajne (cieľ Bývanie a reality).
+
+- Úvod pre klienta (dá sa skryť): „Hypotéka nemusí trvať 30 rokov“ — koľko banke zaplatí spolu a na úrokoch, ilustrácie (posledná splátka v X rokoch vs. domov je váš v Y rokoch) a na druhej strane **Dve cesty k skoršiemu splateniu** a v akom veku bude klient bez hypotéky. V PDF z kalkulačky aj vo finančnom pláne tvorí prvé dve strany kapitoly Bývanie a reality
+- Anuitná splátka, úroky spolu, LTV pri novej hypotéke
+- **Predčasné splatenie** s rovnakou sumou navyše: mimoriadne splátky raz ročne (bez poplatku do 20 % istiny a pri konci fixácie, inak 1 %) alebo investovanie popri hypotéke a splatenie naraz, keď investícia dosiahne zostatok (ako hyposporenie v Exceli); porovnanie podľa toho, koľko klient spolu zaplatí
+- Graf zostatku hypotéky podľa veku klienta a hodnoty investície
+- Orientačný maximálny úver podľa NBS (DSTI so stresovou sadzbou, DTI, LTV)
+- V pláne sa predvyplní prvá hypotéka z profilu (zostávajúca doba sa dopočíta zo splátky), príjem domácnosti, rodina a ostatné úvery; nová hypotéka a suma navyše idú do cashflow po pláne a do akčného plánu
+
 ## Sporenie pre deti
 
 `detska-kalkulacka.html` — pravidelné investovanie pre deti v rovnakom dizajne.
@@ -57,7 +68,7 @@ Vstupný bod je `plan.html`:
 
 1. **Parametre klienta** — osoba, domácnosť (partner, deti), príjmy a výdavky, majetok, rezerva, úvery, poradca. Ukladá sa automaticky v prehliadači (localStorage); zálohu klienta si môžete stiahnuť a nahrať ako JSON.
 2. **Existujúce zmluvy** — 24 typov poistenia (životné, úrazové, majetok, zodpovednosť, PZP, havarijné, GAP, cestovné…). Poistné sa premietne do cashflow, sumy pripoistení zo životných a úrazových zmlúv sa v kalkulačke Životné poistenie doplnia do stĺpca „Aktuálna zmluva“, blížiace sa výročia a chýbajúce poistenie nehnuteľnosti k hypotéke sa objavia v akčnom pláne.
-3. **Ciele a kalkulačky** — otvárajú sa s `?plan=1`: prevezmú spoločné údaje z profilu (vek, mzda, úvery, rodina…), zmeny sa automaticky ukladajú do plánu a spoločné údaje zmenené v kalkulačke sa zapíšu späť do profilu. Bez `?plan=1` (napr. vložené vo WordPresse) fungujú kalkulačky samostatne ako doteraz. Bývanie a Rast príjmu pripravujeme.
+3. **Ciele a kalkulačky** — otvárajú sa s `?plan=1`: prevezmú spoločné údaje z profilu (vek, mzda, úvery, rodina…), zmeny sa automaticky ukladajú do plánu a spoločné údaje zmenené v kalkulačke sa zapíšu späť do profilu. Bez `?plan=1` (napr. vložené vo WordPresse) fungujú kalkulačky samostatne ako doteraz. Rast príjmu pripravujeme.
 4. **Súhrn a PDF** — `financny-plan.html`: cashflow dnes a po realizácii plánu, oblasti plánu, akčný plán a stiahnutie PDF s vlastným brandingom.
 
 Súbory:
@@ -72,7 +83,7 @@ Súbory:
 
 ## Vloženie na web
 
-1. Nahrajte na hosting (alebo GitHub Pages) súbory `plan.html`, `financny-plan.html`, `index.html`, `dochodkova-kalkulacka.html`, `zivotna-kalkulacka.html`, `detska-kalkulacka.html` a celý priečinok `js/` — spolu, v rovnakej štruktúre.
+1. Nahrajte na hosting (alebo GitHub Pages) súbory `plan.html`, `financny-plan.html`, `index.html`, `dochodkova-kalkulacka.html`, `zivotna-kalkulacka.html`, `detska-kalkulacka.html`, `hypotekarna-kalkulacka.html` a celý priečinok `js/` — spolu, v rovnakej štruktúre.
 2. Na stránku (WordPress: blok „Vlastné HTML“) vložte kód nižšie a upravte adresu v `src`. Iframe sa sám prispôsobí výške obsahu, pri prechode medzi plánom, kalkulačkami a súhrnom posunie stránku na začiatok plánu a odkazy na kroky (#ciele…) posunú stránku na správne miesto. `headerOffset` = výška prilepenej hlavičky webu.
 
 ```html
@@ -99,4 +110,4 @@ Súbory:
 
 ## Spustenie
 
-Stačí otvoriť `plan.html` (finančný plán) alebo samostatnú kalkulačku `index.html`, `dochodkova-kalkulacka.html`, `zivotna-kalkulacka.html`, `detska-kalkulacka.html` v prehliadači — nie je potrebný žiadny build krok.
+Stačí otvoriť `plan.html` (finančný plán) alebo samostatnú kalkulačku `index.html`, `dochodkova-kalkulacka.html`, `zivotna-kalkulacka.html`, `detska-kalkulacka.html`, `hypotekarna-kalkulacka.html` v prehliadači — nie je potrebný žiadny build krok.

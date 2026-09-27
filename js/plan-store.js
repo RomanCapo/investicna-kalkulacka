@@ -220,6 +220,27 @@
   }
 
   const SHARED = {
+    // Hypotéka: prvá hypotéka z profilu (zostatok, úrok, splátka), príjem domácnosti, členovia a ostatné úvery.
+    // Úvery sa spravujú v profile, späť sa nezapisujú.
+    housing: {
+      toCalc: (s) => {
+        const loans = activeLoans(s);
+        const mortgage = loans.find((l) => l.kind === "mortgage") || null;
+        const others = loans.filter((l) => l !== mortgage);
+        return pick({
+          age: clientAge(s),
+          netHH: householdNet(s),
+          adults: 1 + (s.household.partner.enabled ? 1 : 0),
+          kids: (s.household.children || []).length,
+          otherPayments: others.reduce((t, l) => t + num(l.monthlyPayment), 0),
+          otherDebt: others.reduce((t, l) => t + num(l.balance), 0),
+          profileMortgage: mortgage && num(mortgage.balance) > 0
+            ? { name: mortgage.name || "", balance: num(mortgage.balance), ratePct: num(mortgage.ratePct), monthlyPayment: num(mortgage.monthlyPayment) }
+            : null,
+        }, ["age", "netHH"]);
+      },
+      fromCalc: (s, v) => { if (!s.client.birthDate && v.age) s.client.age = v.age; },
+    },
     // Sporenie pre deti: deti sa spravujú v profile (zoznam), do kalkulačky idú len meno a vek.
     children: {
       toCalc: (s) => ({
@@ -283,6 +304,7 @@
   };
 
   const SHARED_LABELS = {
+    housing: "vek, príjem domácnosti, rodina, hypotéka a ostatné úvery",
     children: "deti (meno a vek)",
     retirement: "vek, dôchodkový vek, hrubá mzda, odpracované roky, inflácia",
     security: "vek, príjem, úvery, rodina, živiteľ a krytie z existujúcich zmlúv",

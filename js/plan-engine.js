@@ -21,7 +21,7 @@
   const UNIT = { "€": "lump_sum", "€ / mes.": "monthly", "€ / deň": "daily" };
   const GOAL_ORDER = ["housing", "retirement", "investments", "children", "security", "incomeScaling"];
   const GOAL_TITLES = { housing: "Bývanie a reality", retirement: "Renta", investments: "Sporenie a investície", children: "Sporenie pre deti", security: "Zabezpečenie", incomeScaling: "Navýšenie príjmu" };
-  const HAS_CALCULATOR = { retirement: true, investments: true, security: true, children: true };
+  const HAS_CALCULATOR = { housing: true, retirement: true, investments: true, security: true, children: true };
   const LOAN_KIND = { mortgage: "Hypotéka", consumer: "Spotrebný úver", car: "Úver na auto / leasing", other: "Úver" };
 
   // Počet dní do najbližšieho výročia zmluvy (podľa dátumu začiatku) od dátumu plánu.
@@ -59,6 +59,7 @@
     const ret = pick("retirement");
     const sec = pick("security");
     const kids = pick("children"); // len pri deťoch v domácnosti (isGoalSelected)
+    const house = pick("housing");
     const retAll = raw("retirement"); // dôchodkové účty patria do majetku aj bez cieľa Renta
 
     // ---------------------------------------------------------------- Cashflow
@@ -81,13 +82,18 @@
     const retirementExtra = retirementExtraFull - coveredByNewInvestment;
     const proposedPremium = sec && num(sec.premium) > 0 ? num(sec.premium) : null;
     const kidsMonthly = kids ? (kids.kids || []).reduce((t, k) => t + num(k.monthly), 0) : 0;
+    // Hypotéka: splátka novej hypotéky a suma navyše (mimoriadne splátky = splátky úverov, investovanie = investície).
+    const houseNewPayment = house && house.mode === "new" ? num(house.payment) : 0;
+    const houseExtra = house ? num(house.extra) : 0;
+    const housePrepay = house && house.planChoice !== "invest" ? houseExtra : 0;
+    const houseInvest = house && house.planChoice === "invest" ? houseExtra : 0;
 
-    const changed = newInvestment > 0 || retirementExtra > 0 || proposedPremium != null || kidsMonthly > 0;
+    const changed = newInvestment > 0 || retirementExtra > 0 || proposedPremium != null || kidsMonthly > 0 || houseNewPayment > 0 || houseExtra > 0;
     const after = changed
-      ? cashflow(netIncome, num(f.livingExpenses), debtPayments,
+      ? cashflow(netIncome, num(f.livingExpenses), debtPayments + houseNewPayment + housePrepay,
           // Návrh z kalkulačky nahrádza súčasné životné poistenie; ostatné zmluvy ostávajú.
           (proposedPremium != null ? proposedPremium : lifePrem) + otherPrem,
-          num(f.currentInvesting) + newInvestment + retirementExtra + kidsMonthly)
+          num(f.currentInvesting) + newInvestment + retirementExtra + kidsMonthly + houseInvest)
       : undefined;
 
     // ---------------------------------------------------------------- Majetok
@@ -198,6 +204,28 @@
           detail: `Priebežné náklady ${String(inv.costPct).replace(".", ",")} % ročne znížia výnos o ${eur(inv.costs)} za celú dobu.` });
       }
     }
+    if (house) {
+      const dur = (months) => { const y = Math.round((months / 12) * 10) / 10; return Number.isInteger(y) ? `${y} ${y === 1 ? "rok" : y < 5 ? "roky" : "rokov"}` : `${String(y).replace(".", ",")} roka`; };
+      if (house.mode === "new") {
+        actions.push({ priority: house.nbs && !house.nbs.ok ? "high" : "medium", module: "housing",
+          title: house.nbs && !house.nbs.ok ? "Hypotéka je nad odhadovaným limitom NBS" : `Financovať kúpu hypotékou ${eur(house.loan)}`,
+          detail: `Splátka ${eur(house.payment)} mesačne na ${house.years} rokov pri ${String(house.rate).replace(".", ",")} %` +
+            (house.ltv != null ? `, LTV ${Math.round(house.ltv)} %` : "") +
+            (house.nbs ? `; odhadovaný maximálny úver ${eur(house.nbs.maxLoan)}.` : "."),
+          monthlyImpact: -round(house.payment) });
+      }
+      const sc = house.planChoice === "invest" ? house.invest : house.prepay;
+      if ((houseExtra > 0 || num(house.lump) > 0) && sc && sc.savedMonths > 0) {
+        const how = `${houseExtra > 0 ? `${eur(houseExtra)} mesačne` : ""}${houseExtra > 0 && num(house.lump) > 0 ? " a " : ""}${num(house.lump) > 0 ? `${eur(house.lump)} jednorazovo` : ""}`;
+        actions.push({ priority: "medium", module: "housing",
+          title: house.planChoice === "invest" ? `Investovať ${how} na splatenie hypotéky` : `Mimoriadne splátky hypotéky: ${how}`,
+          detail: (house.planChoice === "invest"
+            ? `Keď investícia dosiahne zostatok úveru, hypotéka sa splatí naraz — v ${sc.endAge} rokoch, o ${dur(sc.savedMonths)} skôr. Výnos ${String(house.invPct).replace(".", ",")} % ročne nie je zaručený.`
+            : `Odkladať a raz ročne poslať do banky; hypotéka bude splatená v ${sc.endAge} rokoch, o ${dur(sc.savedMonths)} skôr. Bez poplatku do 20 % istiny ročne a pri konci fixácie.`) +
+            ` Ušetrí spolu ${eur(sc.saved)} oproti splácaniu bez zmeny.`,
+          monthlyImpact: houseExtra > 0 ? -round(houseExtra) : undefined });
+      }
+    }
     if (kids) {
       (kids.kids || []).filter((k) => num(k.monthly) > 0 || num(k.principal) > 0).forEach((k) => {
         const short = k.requiredMonthly != null && k.requiredMonthly > num(k.monthly) + 0.5;
@@ -233,7 +261,7 @@
     });
 
     // ---------------------------------------------------------------- Stav modulov
-    const status = { investments: !!inv, retirement: !!ret, security: !!sec, children: !!kids, housing: false, incomeScaling: false };
+    const status = { investments: !!inv, retirement: !!ret, security: !!sec, children: !!kids, housing: !!house, incomeScaling: false };
     const clientGoals = GOAL_ORDER.filter(selected).map((k) => ({
       key: k,
       title: GOAL_TITLES[k],
@@ -269,6 +297,13 @@
         loans: loans.filter((l) => l.kind === "mortgage" && selected("housing")).map((l) => ({
           name: l.name || LOAN_KIND.mortgage, balance: num(l.balance), ratePct: num(l.ratePct), monthlyPayment: num(l.monthlyPayment),
         })),
+        // Nová hypotéka z kalkulačky = plánovaná kúpa (financovanie a dopad na cashflow).
+        plannedPurchases: house && house.mode === "new" ? [{
+          label: "Plánovaná kúpa", price: round(house.price), ownFunds: round(house.ownFunds), loanAmount: round(house.loan),
+          ratePct: house.rate, fixationYears: house.fixYears, termYears: house.years, monthlyPayment: round(house.payment),
+          freeCashflowBefore: today.free, freeCashflowAfter: round(today.free - num(house.payment)),
+        }] : undefined,
+        mortgage: house || undefined, // prepočet a predčasné splatenie z hypotekárnej kalkulačky (+ úvod pre klienta)
       },
       // Sekcia len pri pridanom cieli „Sporenie a investície“ (dôchodkové účty ju samy nezapnú).
       investments: selected("investments")

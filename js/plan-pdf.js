@@ -139,7 +139,7 @@
   const SECTIONS = [
     {
       key: "housing",
-      isActive: (s) => !!s && (hasItems(s.properties) || hasItems(s.loans) || hasItems(s.plannedPurchases)),
+      isActive: (s) => !!s && (!!s.mortgage || hasItems(s.properties) || hasItems(s.loans) || hasItems(s.plannedPurchases)),
       render: renderHousing,
     },
     {
@@ -334,7 +334,7 @@
   }
 
   // Line chart as inline SVG (vector, fonts resolved by pdfmake -> Roboto).
-  function lineChartSvg(ctx, series, height) {
+  function lineChartSvg(ctx, series, height, opts) {
     const W = CONTENT_W, H = height || 190;
     const padL = 52, padR = 70, padT = 10, padB = 22;
     const all = series.flatMap((s) => s.points);
@@ -369,7 +369,7 @@
     });
     ends.forEach((e) => {
       out.push(`<circle cx="${e.x.toFixed(1)}" cy="${e.y.toFixed(1)}" r="3" fill="${e.s.color}" stroke="#ffffff" stroke-width="1.5"/>`);
-      out.push(`<text x="${(e.x + 7).toFixed(1)}" y="${(e.ly + 2.5).toFixed(1)}" font-family="Roboto" font-size="7.5" font-weight="bold" fill="${ctx.brand.ink}">${esc(compactEur(e.v))}</text>`);
+      if (!(opts && opts.noEndLabels)) out.push(`<text x="${(e.x + 7).toFixed(1)}" y="${(e.ly + 2.5).toFixed(1)}" font-family="Roboto" font-size="7.5" font-weight="bold" fill="${ctx.brand.ink}">${esc(compactEur(e.v))}</text>`);
     });
 
     return { svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${out.join("")}</svg>`, width: W };
@@ -628,6 +628,8 @@
   // ---------------------------------------------------------------------------
   function renderHousing(ctx, s) {
     const out = [];
+    const mort = s.mortgage;
+    if (mort && mort.motivation) out.push(...housingIntro(ctx, mort.motivation));
     const props = s.properties || [], loans = s.loans || [], planned = s.plannedPurchases || [];
 
     if (props.length) {
@@ -690,7 +692,7 @@
       out.push({
         unbreakable: true,
         stack: nn([
-          h2(`${p.label} · ${L.propertyType[p.type] || p.type}, ${L.usage[p.usage] || p.usage} · plánovaná kúpa ${fmtMonth(p.targetDate)}`),
+          h2([p.label, p.type ? `${L.propertyType[p.type] || p.type}${p.usage ? `, ${L.usage[p.usage] || p.usage}` : ""}` : null, p.targetDate ? `plánovaná kúpa ${fmtMonth(p.targetDate)}` : null].filter(Boolean).join(" · ")),
           {
             columns: [
               { width: "*", stack: [{ text: "FINANCOVANIE", style: "th", margin: [0, 0, 0, 2] }, kvTable(ctx, financing)] },
@@ -715,6 +717,36 @@
         ]),
       });
     });
+
+    if (mort) {
+      const dur = (months) => { const y = Math.round((months / 12) * 10) / 10; return Number.isInteger(y) ? `${y} ${rokov(y)}` : `${num1(y)} roka`; };
+      const rows = [["Bez zmeny", mort.base], ["Mimoriadne splátky", mort.prepay], ["Investovanie popri hypotéke", mort.invest]].map(([l, sc], i) => [
+        td(l + (i > 0 && (mort.planChoice === "invest" ? i === 2 : i === 1) ? " (v pláne)" : ""), { bold: true }),
+        tdNum(`${sc.endAge} r.`), tdNum(i ? dur(sc.savedMonths) : "—"), tdNum(eur(sc.out != null ? sc.out : sc.interest)), tdNum(i ? eur(sc.saved) : "—", { bold: true }),
+      ]);
+      const chart = mort.chart || [];
+      // Každá čiara končí v roku splatenia (inak by sa popisky „0 €“ na konci prekrývali).
+      const upToPayoff = (key) => { const i = chart.findIndex((p, j) => j > 0 && p[key] <= 0.5); return (i < 0 ? chart : chart.slice(0, i + 1)).map((p) => ({ x: p.age, y: p[key] })); };
+      const series = [
+        { label: "Bez zmeny", color: MOT_DANGER, points: upToPayoff("base") },
+        { label: "Mimoriadne splátky", color: ctx.brand.primary, points: upToPayoff("prepay") },
+        { label: "Investovanie", color: SERIES[0], points: upToPayoff("invest") },
+      ];
+      const extra = `${eur(mort.extra)} mesačne navyše${mort.lump > 0 ? ` a ${eur(mort.lump)} jednorazovo` : ""}`;
+      out.push(block(mort.mode === "new" ? "Nová hypotéka a predčasné splatenie" : "Predčasné splatenie hypotéky", nn([
+        tiles([
+          tile(ctx, mort.mode === "new" ? "Výška úveru" : "Zostatok úveru", eur(mort.loan), `${pct(mort.rate)} · fixácia ${mort.fixYears} r.`),
+          tile(ctx, "Mesačná splátka", eur(mort.payment), `${mort.years} ${rokov(mort.years)}, posledná v ${mort.base.endAge} r.`),
+          tile(ctx, "Úroky spolu", eur(mort.base.interest), `zaplatíte ${eur(mort.totalPaid)}`),
+        ]),
+        { text: `Porovnanie pri ${extra}. Mimoriadne splátky raz ročne (bez poplatku do 20 % istiny a pri konci fixácie); pri investovaní sa hypotéka splatí naraz, keď investícia dosiahne zostatok (výnos ${pct(mort.invPct)} ročne, nie je zaručený).`,
+          style: "muted", margin: [0, 8, 0, 4] },
+        dataTable(ctx, ["*", 70, 70, 80, 80], [th("Scenár"), th("Splatená vo veku", true), th("Skôr o", true), th("Zaplatíte spolu", true), th("Ušetríte", true)], rows),
+        chart.length >= 2 ? legendRow(series) : null,
+        chart.length >= 2 ? lineChartSvg(ctx, series, 150, { noEndLabels: true }) : null,
+        chart.length >= 2 ? { text: "Zostatok úveru podľa veku klienta; bodka = splatenie.", style: "muted", margin: [0, 4, 0, 0] } : null,
+      ])));
+    }
 
     return out;
   }
@@ -1503,6 +1535,159 @@
     return out;
   }
 
+  // Ilustrácie úvodu k hypotéke (rovnaké ako v hypotekárnej kalkulačke, popisy s vekom klienta).
+  const houseSceneSvgs = (font, baseAge, planAge) => ({
+    bank: `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200">
+    <rect width="320" height="200" fill="#dde3e1"/>
+    <path d="M168 58 L240 30 L312 58 Z" fill="#8a9893"/>
+    <rect x="172" y="58" width="136" height="10" fill="#9fb0ab"/>
+    ${[182, 208, 234, 260, 286].map((cx) => `<rect x="${cx}" y="72" width="12" height="80" fill="#b9c4c0"/>`).join("")}
+    <rect x="168" y="152" width="144" height="12" fill="#8a9893"/>
+    <circle cx="240" cy="46" r="8" fill="#dde3e1"/><text x="240" y="50" text-anchor="middle" font-family="${font}" font-size="11" font-weight="700" fill="#465753">€</text>
+    <circle cx="96" cy="70" r="13" fill="#e6b48c"/>
+    <path d="M83 66 Q96 54 109 66 Z" fill="#dfe4e1"/>
+    <path d="M84 84 Q96 80 110 86 L114 132 L80 132 Z" fill="#6b7b77"/>
+    <rect x="84" y="130" width="10" height="38" rx="3" fill="#465753"/><rect x="100" y="130" width="10" height="38" rx="3" fill="#465753"/>
+    <path d="M110 96 L130 110" stroke="#6b7b77" stroke-width="7" stroke-linecap="round"/>
+    <rect x="128" y="102" width="30" height="20" rx="2" fill="#ffffff"/>
+    <path d="M128 102 L143 114 L158 102" fill="none" stroke="#b9c4c0" stroke-width="2"/>
+    <line x1="74" y1="100" x2="64" y2="168" stroke="#465753" stroke-width="4" stroke-linecap="round"/>
+    <path d="M84 96 L72 102" stroke="#6b7b77" stroke-width="7" stroke-linecap="round"/>
+    <rect x="0" y="170" width="320" height="30" fill="#465753"/>
+    <text x="160" y="190" text-anchor="middle" font-family="${font}" font-size="14" font-weight="700" fill="#ffffff">posledná splátka v ${baseAge} rokoch</text>
+  </svg>`,
+    home: `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200">
+    <defs><linearGradient id="homesky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d5eeea"/><stop offset="1" stop-color="#fbf4e4"/></linearGradient></defs>
+    <rect width="320" height="200" fill="url(#homesky)"/>
+    <circle cx="270" cy="40" r="18" fill="#e3a33b"/>
+    ${[[34, 30, "#c23b32"], [70, 56, "#e3a33b"], [112, 22, "#2a78d6"], [200, 26, "#1baf7a"], [176, 44, "#c23b32"], [150, 60, "#1baf7a"]].map(([x, y, c], i) => `<rect x="${x}" y="${y}" width="7" height="4" rx="1" fill="${c}" transform="rotate(${i * 40} ${x} ${y})"/>`).join("")}
+    <rect x="28" y="96" width="112" height="74" fill="#ffffff"/><path d="M16 98 L84 50 L152 98 Z" fill="#0f6b5c"/>
+    <rect x="42" y="110" width="22" height="20" fill="#d5eeea"/><rect x="104" y="110" width="22" height="20" fill="#d5eeea"/><rect x="72" y="136" width="24" height="34" fill="#c96f3b"/>
+    <path d="M60 60 L64 52 L72 60" fill="none" stroke="#e3a33b" stroke-width="0"/>
+    <circle cx="206" cy="74" r="13" fill="#e6b48c"/>
+    <path d="M193 70 Q206 58 219 70 Z" fill="#6b4f36"/>
+    <rect x="192" y="88" width="28" height="48" rx="11" fill="#1baf7a"/>
+    <rect x="194" y="134" width="10" height="36" rx="3" fill="#10231f"/><rect x="208" y="134" width="10" height="36" rx="3" fill="#10231f"/>
+    <path d="M218 96 L240 78" stroke="#1baf7a" stroke-width="7" stroke-linecap="round"/>
+    <rect x="232" y="54" width="62" height="28" rx="4" fill="#ffffff" stroke="#0f6b5c" stroke-width="3" transform="rotate(-8 263 68)"/>
+    <text x="263" y="73" text-anchor="middle" font-family="${font}" font-size="11" font-weight="700" fill="#0f6b5c" transform="rotate(-8 263 68)">SPLATENÉ</text>
+    <path d="M194 98 L178 112" stroke="#1baf7a" stroke-width="7" stroke-linecap="round"/>
+    <rect x="0" y="170" width="320" height="30" fill="#efe1c2"/>
+    <text x="160" y="190" text-anchor="middle" font-family="${font}" font-size="14" font-weight="700" fill="#10231f">domov je váš v ${planAge} rokoch</text>
+  </svg>`,
+  });
+
+  // Úvod pre klienta v kapitole Bývanie a reality (rovnaký obsah ako v hypotekárnej kalkulačke).
+  function housingIntro(ctx, m) {
+    const P = ctx.brand.primary, SOFT = ctx.brand.primarySoft, INK = ctx.brand.ink, BLUE = SERIES[0], BLUE_SOFT = "#e6f0fb";
+    const scenes = houseSceneSvgs("Roboto", m.baseEndAge, m.bestEndAge);
+    const dur = (months) => { const y = Math.round((months / 12) * 10) / 10; return Number.isInteger(y) ? `${y} ${rokov(y)}` : `${num1(y)} roka`; };
+    const rate = `${new Intl.NumberFormat("sk-SK", { maximumFractionDigits: 2 }).format(m.rate)} %`;
+    const extraText = `${eur(m.extra)} mesačne navyše${m.lump > 0 ? ` a ${eur(m.lump)} jednorazovo` : ""}`;
+    const tag = (text, fill) => ({ table: { body: [[{ text, bold: true, fontSize: 8, characterSpacing: 0.6, color: "#ffffff", fillColor: fill, margin: [6, 2, 6, 2] }]] }, layout: "noBorders", margin: [0, 0, 0, 4] });
+    const sceneW = (CONTENT_W - 18) / 2;
+    const chip = (label, value) => ({
+      stack: [{ text: label.toUpperCase(), fontSize: 7, bold: true, color: ctx.brand.muted, characterSpacing: 0.4 }, { text: value, fontSize: 13, bold: true, color: INK, margin: [0, 1, 0, 0] }],
+      fillColor: MOT_TINT, margin: [10, 4, 10, 5],
+    });
+    const row3 = (cells, gap) => ({
+      table: { widths: cells.map(() => "*"), body: [cells] },
+      layout: { hLineWidth: () => 0, vLineWidth: (i) => (i === 0 || i === cells.length ? 0 : gap), vLineColor: () => "#ffffff", paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 },
+    });
+    const max = Math.max(m.totalPaid, 1), barW = 240;
+    const barRow = (label, value, color) => [
+      { text: label, fontSize: 8.5, bold: true, color: ctx.brand.inkSecondary, margin: [0, 1, 0, 0] },
+      { canvas: [{ type: "rect", x: 0, y: 2, w: Math.max(6, (value / max) * barW), h: 8, r: 4, color }] },
+      { text: eur(value), fontSize: 9.5, bold: true, color: INK, alignment: "right" },
+    ];
+    const card = (title, sub, big, small, totalLabel, total, hint, accent, soft) => ({
+      table: {
+        widths: ["*"],
+        body: [
+          [{ fillColor: soft, margin: [6, 5, 6, 5], stack: [
+            { text: title, bold: true, fontSize: 14, color: accent, alignment: "center" },
+            { text: sub, italics: true, fontSize: 8, color: ctx.brand.inkSecondary, alignment: "center", margin: [0, 2, 0, 0] },
+          ] }],
+          [{ margin: [6, 5, 6, 6], stack: [
+            { text: big, bold: true, fontSize: 16, color: INK, alignment: "center" },
+            { text: small, bold: true, fontSize: 8, color: ctx.brand.muted, alignment: "center" },
+            { text: totalLabel, fontSize: 8.5, color: ctx.brand.inkSecondary, alignment: "center", margin: [0, 3, 0, 0] },
+            { text: total, bold: true, fontSize: 11.5, color: INK, alignment: "center" },
+            { text: hint, fontSize: 7.5, color: ctx.brand.muted, alignment: "center", margin: [0, 3, 0, 0] },
+          ] }],
+        ],
+      },
+      layout: { hLineWidth: (i) => (i === 1 ? 0 : 1.2), vLineWidth: () => 1.2, hLineColor: () => accent, vLineColor: () => accent },
+    });
+    const endCard = (title, sub, age, color, soft) => ({
+      fillColor: soft, margin: [6, 9, 6, 10], stack: [
+        { text: title, bold: true, fontSize: 12, color, alignment: "center" },
+        { text: sub, fontSize: 8.5, color: ctx.brand.inkSecondary, alignment: "center", margin: [0, 2, 0, 6] },
+        centered({ table: { body: [[{ text: `${age} r.`, bold: true, fontSize: 12, color: "#ffffff", fillColor: color, margin: [10, 3, 10, 4] }]] }, layout: "noBorders" }, "auto"),
+      ],
+    });
+
+    const page1 = nn([
+      motTop(ctx, `Hypotéka nemusí trvať ${m.years} ${rokov(m.years)}`, { text: "Banka vám požičia na desaťročia.\nNikto vám však nekáže byť jej dlžníkom tak dlho." }, true),
+      Object.assign(row3([chip(m.isNew ? "Nový úver" : "Zostatok úveru", eur(m.loan)), chip("Úrok", rate), chip("Splátka", eur(m.payment))], 8), { margin: [0, 0, 0, 8] }),
+      { text: `Splátka ${eur(m.payment)} mesačne vyzerá zvládnuteľne. Za ${m.years} ${rokov(m.years)} však banke pošlete ${eur(m.totalPaid)} — z toho ${eur(m.interest)} len za to, že ste si požičali.`,
+        alignment: "center", fontSize: 10.5, color: ctx.brand.inkSecondary, lineHeight: 1.35, margin: [20, 0, 20, 6] },
+      centered({
+        table: { widths: [110, barW, "*"], body: [barRow(m.isNew ? "Požičiate si" : "Dlhujete dnes", m.loan, INK), barRow("Vrátite banke spolu", m.totalPaid, MOT_DANGER), barRow("z toho úroky", m.interest, MOT_DANGER)] },
+        layout: { hLineWidth: () => 0, vLineWidth: () => 0, paddingTop: () => 1.5, paddingBottom: () => 1.5, paddingLeft: () => 4, paddingRight: () => 4 },
+        margin: [0, 2, 0, 2],
+      }, 410),
+      { text: ["Svoj domov zaplatíte ", { text: `${new Intl.NumberFormat("sk-SK", { maximumFractionDigits: 2 }).format(m.ratio)}-krát`, color: MOT_DANGER }], alignment: "center", bold: true, fontSize: 16, color: INK, margin: [0, 4, 0, 0] },
+      { text: `Z každých 100 € splátky ide v priemere ${eur(m.interestShare * 100)} na úrok, nie na váš domov.`, alignment: "center", fontSize: 9, color: ctx.brand.muted, margin: [0, 2, 0, 10] },
+      {
+        columns: [
+          { width: sceneW, stack: [tag("BEZ PLÁNU", MOT_DANGER), { svg: scenes.bank, width: sceneW }] },
+          { width: sceneW, stack: [tag("S PLÁNOM", P), { svg: scenes.home, width: sceneW }] },
+        ],
+        columnGap: 18,
+      },
+      m.bestSavedMonths > 0 ? { stack: [pill(`Stačí ${extraText}`, P)], margin: [0, 10, 0, 4] } : null,
+      m.bestSavedMonths > 0 ? { text: [
+        "a hypotéka bude splatená o ", { text: ` ${dur(m.bestSavedMonths)} `, bold: true, fontSize: 13, color: P, background: SOFT },
+        ` skôr — v ${m.bestEndAge} rokoch namiesto ${m.baseEndAge}. Ušetríte `,
+        { text: ` ${eur(m.bestSaved)} `, bold: true, fontSize: 13, color: P, background: SOFT }, ".",
+      ], alignment: "center", bold: true, fontSize: 10, color: INK, lineHeight: 1.3, margin: [24, 0, 24, 0] } : null,
+    ]);
+
+    const page2 = nn([
+      motTop(ctx, "Dve cesty k skoršiemu splateniu", { text: ["Mimoriadne splátky sú ", { text: "istota", color: P, bold: true }, ". Investovanie popri hypotéke je ", { text: "šanca s rizikom", color: MOT_DANGER, bold: true }, ". Obe skracujú čas, keď pracujete pre banku."] }),
+      {
+        columns: [
+          { width: "*", stack: [card("Mimoriadne splátky", `${extraText}, raz ročne do banky`, `v ${m.prepay.endAge} rokoch`, `o ${dur(m.prepay.savedMonths)} skôr`, "Ušetríte spolu", eur(m.prepay.saved), `istý výnos = úrok hypotéky ${rate}`, P, SOFT)] },
+          { width: 44, text: "ALEBO", bold: true, fontSize: 8.5, characterSpacing: 1, color: ctx.brand.muted, alignment: "center", margin: [0, 56, 0, 0] },
+          { width: "*", stack: [card("Investovanie", `${extraText} do fondov, splatenie naraz`, `v ${m.invest.endAge} rokoch`, `o ${dur(m.invest.savedMonths)} skôr`, "Ušetríte spolu", eur(m.invest.saved), `očakávaný výnos ${pct(m.invPct)} ročne, nie je garantovaný`, BLUE, BLUE_SOFT)] },
+        ],
+        columnGap: 6,
+        margin: [20, 4, 20, 12],
+      },
+      { text: "Kedy budete bez hypotéky?", alignment: "center", bold: true, fontSize: 11, color: INK, margin: [0, 0, 0, 8] },
+      row3([
+        endCard("Bez zmeny", "posledná splátka", m.baseEndAge, MOT_DANGER, MOT_DANGER_SOFT),
+        endCard("Mimoriadne splátky", "úver splatený", m.prepay.endAge, P, SOFT),
+        endCard("Investovanie", "úver splatený naraz", m.invest.endAge, BLUE, BLUE_SOFT),
+      ], 10),
+      motDivider(ctx),
+      { text: ["Každé euro, ktoré pošlete banke navyše,\nvám zarobí ", { text: `${rate} ročne`, color: P, bold: true }, " — bez rizika a bez dane."], alignment: "center", italics: true, fontSize: 14, color: INK, lineHeight: 1.3 },
+      motDivider(ctx),
+      { text: "Hypotéka je nástroj, nie doživotný záväzok.", alignment: "center", bold: true, italics: true, fontSize: 13, color: INK, margin: [0, 4, 0, 8] },
+      { text: `Mimoriadnu splátku do 20 % istiny raz za 12 mesiacov a pri skončení fixácie (${m.fixYears ? `každých ${m.fixYears} ${rokov(m.fixYears)}` : "podľa zmluvy"}) môžete splatiť bez poplatku, inak najviac 1 % zo splatenej sumy. ` +
+          "Po mimoriadnej splátke zostáva splátka rovnaká a skracuje sa doba splácania. Pri investovaní sa hypotéka splatí naraz, keď hodnota investície dosiahne zostatok istiny; výnos nie je zaručený. " +
+          "Úroková sadzba je počas celej doby rovnaká. Ilustratívny prepočet, nie je ponukou úveru ani investičným odporúčaním.",
+        alignment: "center", fontSize: 7.5, color: ctx.brand.muted, lineHeight: 1.25 },
+    ]);
+
+    return [
+      { stack: page1 },
+      { stack: page2, pageBreak: "before" },
+      { text: "", pageBreak: "after" },
+    ];
+  }
+
   function renderRetirement(ctx, r) {
     const keys = ["statePension", "pillar2", "pillar3", "investments", "rental", "other"];
     const src = keys.map((k, i) => ({ k, label: L.retirementSources[k], value: r.sources[k] || 0, color: SERIES[i] })).filter((x) => x.value > 0);
@@ -1647,7 +1832,8 @@
     SECTIONS.forEach((s) => {
       if (!active.includes(s.key)) return;
       // Renta a Zabezpečenie s úvodom pre klienta začínajú vždy na novej strane (úvod zaberá celú stranu).
-      const hasIntro = ["retirement", "security", "children"].includes(s.key) && data[s.key] && data[s.key].motivation;
+      const hasIntro = s.key === "housing" ? !!(data.housing && data.housing.mortgage && data.housing.mortgage.motivation)
+        : ["retirement", "security", "children"].includes(s.key) && data[s.key] && data[s.key].motivation;
       const mode = hasIntro && breaks !== "never" ? "always" : breaks;
       content.push(...h1(ctx, num++, L.modules[s.key], null, mode));
       content.push(...s.render(ctx, data[s.key]));

@@ -344,8 +344,15 @@
         <p class="goal-desc">Vlastné bývanie, hypotéka a nehnuteľnosti.</p>
         <div class="goal-select" data-goal="housing" data-placeholder="napr. kúpa väčšieho bytu do 3 rokov"></div>
         <div class="goal-calcs">
-          <div class="calc soon">
-            <div class="calc-head"><span class="calc-name">Hypotéka a kúpa nehnuteľnosti</span><span class="chip soon">Pripravujeme</span></div>
+          <div class="calc" data-calc="housing">
+            <div class="calc-head"><span class="calc-name">Hypotekárna kalkulačka</span><span class="chip todo" data-status>Nevyplnené</span></div>
+            <p class="calc-desc">Nová alebo existujúca hypotéka, predčasné splatenie mimoriadnymi splátkami či investovaním a odhad úveru podľa NBS.</p>
+            <div class="metrics" data-metrics hidden></div>
+            <div data-extra></div>
+            <div class="actions">
+              <a class="goal-link" data-open href="hypotekarna-kalkulacka.html?plan=1">Otvoriť →</a>
+              <button type="button" class="btn-ghost" data-clear="housing" hidden>Odstrániť z plánu</button>
+            </div>
           </div>
         </div>
       </article>
@@ -833,6 +840,15 @@
           [gap > 0 ? "Chýba" : "Rezerva", `${eur(Math.abs(gap))} / mes.`],
         ];
       } },
+    { key: "housing", title: "Hypotekárna kalkulačka",
+      metrics: (m) => {
+        const sc = m.planChoice === "invest" ? m.invest : m.prepay;
+        return [
+          [m.mode === "new" ? "Nová hypotéka" : "Zostatok", `${eur(m.loan)} · ${eur(m.payment)} / mes.`],
+          ["Splatená", sc && sc.savedMonths > 0 ? `v ${sc.endAge} r. (namiesto ${m.base.endAge} r.)` : `v ${m.base.endAge} r.`],
+          ["Ušetrí", sc && sc.saved > 0 ? eur(sc.saved) : "—"],
+        ];
+      } },
     { key: "children", title: "Sporenie pre deti",
       metrics: (m) => {
         const kids = m.kids || [];
@@ -887,7 +903,7 @@
   });
 
   function renderChecklist(s) {
-    const withCalc = { retirement: true, investments: true, security: true, children: true };
+    const withCalc = { housing: true, retirement: true, investments: true, security: true, children: true };
     const goals = PS.GOAL_KEYS.filter((k) => PS.isGoalSelected(s, k));
     const items = [["Parametre klienta (meno a príjem)", PS.hasProfile(s), "doplňte v kroku 1"]];
     if (!goals.length) items.push(["Ciele klienta", false, "pridajte aspoň jeden cieľ v kroku 3"]);

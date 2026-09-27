@@ -84,6 +84,24 @@ export interface HousingSection {
   properties?: Property[];
   loans?: Loan[];
   plannedPurchases?: PlannedPurchase[];
+  mortgage?: MortgageSummary;      // from hypotekarna-kalkulacka.html (summarizeHousing)
+}
+
+export interface MortgageScenario {
+  months: number; endAge: number;  // payoff after `months`, at client age `endAge`
+  interest: number; saved: number; savedMonths: number; fees: number; leftover: number;
+}
+
+export interface MortgageSummary {
+  mode: "new" | "existing";
+  loan: number; rate: number; fixYears: number; years: number; age: number; payment: number;
+  price: number | null; ownFunds: number | null; ltv: number | null;
+  extra: number; lump: number; invPct: number;       // extra monthly amount, one-off prepayment, expected return when investing
+  planChoice: "prepay" | "invest";                   // which strategy goes into the plan
+  base: MortgageScenario; prepay: MortgageScenario; invest: MortgageScenario; totalPaid: number;
+  chart: { year: number; age: number; base: number; prepay: number; invest: number; fund: number }[];
+  nbs: { maxLoan: number; maxDsti: number; maxDti: number; ok: boolean };
+  motivation?: Record<string, unknown>;              // client-facing intro pages (computeHousingMotivation)
 }
 
 export type PropertyType = "apartment" | "house" | "land" | "commercial" | "garage" | "other";
