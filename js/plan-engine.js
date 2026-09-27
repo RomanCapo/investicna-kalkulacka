@@ -264,6 +264,7 @@
         : undefined,
       security: {
         emergencyFund,
+        motivation: (sec && sec.motivation) || undefined, // úvod pre klienta zo životnej kalkulačky
         premiumBudget: sec ? { min: round(sec.budgetLo), max: round(sec.budgetHi), current: round(lifePrem), proposed: proposedPremium != null ? round(proposedPremium) : undefined } : undefined,
         people,
         contracts: selected("security") ? contracts.map((c) => {

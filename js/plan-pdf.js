@@ -786,6 +786,7 @@
   // ---------------------------------------------------------------------------
   function renderSecurity(ctx, s) {
     const out = [];
+    if (s.motivation) out.push(...securityIntro(ctx, s.motivation));
     const ef = s.emergencyFund;
     if (ef && ef.target > 0) {
       const months = ef.monthlyEssentialExpenses > 0 ? ef.current / ef.monthlyEssentialExpenses : null;
@@ -1094,6 +1095,215 @@
     ];
   }
 
+  // ---------------------------------------------------------------------------
+  // Úvod pre klienta v kapitole Zabezpečenie (rovnaký obsah ako v životnej kalkulačke):
+  // strana 1 príbeh „Čo keby zajtra…“ s ilustráciami, strana 2 „čo keď príjem vypadne“ (bez poistenia vs. poistený), strana 3 čo a prečo poisťujeme.
+  // ---------------------------------------------------------------------------
+  // Ilustrácie ako v úvode k dôchodku (font Roboto je vo VFS pdfmake).
+  // Ilustrácie úvodu: „bez poistenia“ (noc nad upomienkami) a „s poistením“ (rodina drží spolu).
+  const lifeSceneSvgs = (font) => ({
+    alone: `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200">
+    <rect width="320" height="200" fill="#26332f"/>
+    <rect x="214" y="22" width="80" height="62" rx="4" fill="#131c1a" stroke="#465753" stroke-width="4"/>
+    <line x1="254" y1="22" x2="254" y2="84" stroke="#465753" stroke-width="3"/>
+    <line x1="214" y1="53" x2="294" y2="53" stroke="#465753" stroke-width="3"/>
+    <circle cx="276" cy="38" r="9" fill="#e8e3c8"/><circle cx="281" cy="35" r="8" fill="#131c1a"/>
+    ${[[226, 32], [238, 68], [270, 70]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.4" fill="#e8e3c8"/>`).join("")}
+    <rect x="34" y="30" width="46" height="44" rx="3" fill="#dfe4e1"/>
+    <rect x="34" y="30" width="46" height="10" rx="3" fill="#c23b32"/>
+    ${[0, 1, 2].map((r) => [0, 1, 2, 3].map((c) => `<rect x="${39 + c * 10}" y="${45 + r * 9}" width="6" height="5" fill="#9fb0ab"/>`).join("")).join("")}
+    <path d="M39 45 L75 70 M75 45 L39 70" stroke="#c23b32" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="128" y1="0" x2="128" y2="30" stroke="#465753" stroke-width="2"/>
+    <path d="M112 30 H144 L137 18 H119 Z" fill="#d08a16"/>
+    <path d="M112 30 L78 146 H178 L144 30 Z" fill="#f3d9a4" opacity="0.13"/>
+    <path d="M104 142 Q104 104 128 102 Q152 104 152 142 Z" fill="#0d1715"/>
+    <circle cx="128" cy="88" r="14" fill="#0d1715"/>
+    <path d="M108 124 L116 92" stroke="#0d1715" stroke-width="9" stroke-linecap="round"/>
+    <path d="M148 124 L140 92" stroke="#0d1715" stroke-width="9" stroke-linecap="round"/>
+    <rect x="28" y="140" width="212" height="9" rx="2" fill="#6b4f36"/>
+    <rect x="40" y="149" width="7" height="24" fill="#503a27"/><rect x="221" y="149" width="7" height="24" fill="#503a27"/>
+    <rect x="156" y="124" width="58" height="17" rx="2" fill="#f4f1ea" transform="rotate(-8 185 132)"/>
+    <rect x="162" y="118" width="60" height="17" rx="2" fill="#ffffff" transform="rotate(5 192 126)"/>
+    <text x="192" y="130" text-anchor="middle" font-family="${font}" font-size="7.5" font-weight="700" fill="#c23b32" transform="rotate(5 192 126)">UPOMIENKA</text>
+    <rect x="58" y="128" width="26" height="12" rx="2" fill="#dfe4e1"/>
+    <rect x="61" y="130" width="20" height="3" fill="#465753"/>
+    <rect x="0" y="173" width="320" height="27" fill="#0d1715"/>
+    <text x="160" y="191" text-anchor="middle" font-family="${font}" font-size="14" font-weight="700" fill="#ffffff">3. mesiac bez výplaty</text>
+  </svg>`,
+    together: `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200">
+    <defs><linearGradient id="room" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3f1ec"/><stop offset="1" stop-color="#fbf4e4"/></linearGradient></defs>
+    <rect width="320" height="200" fill="url(#room)"/>
+    <rect x="228" y="20" width="72" height="58" rx="4" fill="#fdf6e3" stroke="#ffffff" stroke-width="4"/>
+    <circle cx="264" cy="46" r="14" fill="#e3a33b"/>
+    <line x1="264" y1="20" x2="264" y2="78" stroke="#ffffff" stroke-width="3"/>
+    <rect x="26" y="126" width="18" height="22" rx="3" fill="#c96f3b"/>
+    ${[[-38, "#1baf7a"], [-13, "#0f6b5c"], [13, "#1baf7a"], [38, "#0f6b5c"]].map(([a, c]) => `<ellipse cx="35" cy="106" rx="6" ry="18" fill="${c}" transform="rotate(${a} 35 126)"/>`).join("")}
+    <path d="M160 58 C140 44 138 28 150 24 C156 22 160 28 160 31 C160 28 164 22 170 24 C182 28 180 44 160 58 Z" fill="#c23b32"/>
+    <rect x="0" y="172" width="320" height="28" fill="#efe1c2"/>
+    <circle cx="112" cy="74" r="12" fill="#e6b48c"/>
+    <path d="M104 66 Q112 56 121 66 Z" fill="#6b4f36"/>
+    <rect x="98" y="88" width="28" height="50" rx="12" fill="#0f6b5c"/>
+    <rect x="102" y="134" width="9" height="36" rx="3" fill="#10231f"/><rect x="114" y="134" width="9" height="36" rx="3" fill="#10231f"/>
+    <path d="M124 100 L142 110" stroke="#0f6b5c" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="152" cy="150" r="19" fill="none" stroke="#10231f" stroke-width="4"/>
+    <circle cx="152" cy="150" r="3" fill="#10231f"/>
+    <circle cx="180" cy="166" r="5" fill="none" stroke="#10231f" stroke-width="3"/>
+    <path d="M140 108 L142 138 H176 L180 161" fill="none" stroke="#10231f" stroke-width="4" stroke-linejoin="round"/>
+    <rect x="143" y="106" width="18" height="30" rx="8" fill="#1baf7a"/>
+    <rect x="148" y="128" width="26" height="10" rx="5" fill="#2a78d6"/>
+    <path d="M172 136 L175 156" stroke="#2a78d6" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="153" cy="94" r="11" fill="#e6b48c"/>
+    <path d="M143 91 Q153 80 163 90 Z" fill="#10231f"/>
+    <circle cx="212" cy="116" r="9" fill="#e6b48c"/>
+    <path d="M203 113 Q212 104 221 113 Z" fill="#d08a16"/>
+    <rect x="202" y="125" width="20" height="26" rx="8" fill="#d08a16"/>
+    <rect x="204" y="149" width="7" height="22" rx="3" fill="#10231f"/><rect x="213" y="149" width="7" height="22" rx="3" fill="#10231f"/>
+    <path d="M203 132 L172 124" stroke="#d08a16" stroke-width="6" stroke-linecap="round"/>
+    <text x="160" y="191" text-anchor="middle" font-family="${font}" font-size="14" font-weight="700" fill="#10231f">život sa zmenil, domov zostal</text>
+  </svg>`,
+  });
+  const LIFE_SCENES = lifeSceneSvgs("Roboto");
+
+  function securityIntro(ctx, m) {
+    const P = ctx.brand.primary, SOFT = ctx.brand.primarySoft, INK = ctx.brand.ink;
+    const max = Math.max(m.net || 0, 1);
+    const barW = 240;
+    const barRow = (label, value, color) => [
+      { text: label, fontSize: 8.5, bold: true, color: ctx.brand.inkSecondary, margin: [0, 1, 0, 0] },
+      { canvas: [{ type: "rect", x: 0, y: 2, w: Math.max(6, (value / max) * barW), h: 8, r: 4, color }] },
+      { text: eur(value), fontSize: 9.5, bold: true, color: INK, alignment: "right" },
+    ];
+    const chip = (label, value) => ({
+      stack: [{ text: label.toUpperCase(), fontSize: 7, bold: true, color: ctx.brand.muted, characterSpacing: 0.4 }, { text: value, fontSize: 13, bold: true, color: INK, margin: [0, 1, 0, 0] }],
+      fillColor: MOT_TINT, margin: [10, 4, 10, 5],
+    });
+    const premiumText = m.premium ? eur(m.premium) : `${eur(m.budgetLo)} – ${eur(m.budgetHi)}`;
+    const card = (title, sub, amount, note, totalLabel, total, accent, soft) => ({
+      table: {
+        widths: ["*"],
+        body: [
+          [{ fillColor: soft, margin: [6, 5, 6, 5], stack: [
+            { text: title, bold: true, fontSize: 15, color: accent, alignment: "center" },
+            { text: sub, italics: true, fontSize: 8.5, color: ctx.brand.inkSecondary, alignment: "center", margin: [0, 2, 0, 0] },
+          ] }],
+          [{ margin: [6, 5, 6, 6], stack: [
+            { text: amount, bold: true, fontSize: 17, color: INK, alignment: "center" },
+            { text: note, bold: true, fontSize: 8, color: ctx.brand.muted, alignment: "center" },
+            { text: totalLabel, fontSize: 8.5, color: ctx.brand.inkSecondary, alignment: "center", margin: [0, 3, 0, 0] },
+            { text: total, bold: true, fontSize: 11.5, color: accent === P ? INK : MOT_DANGER, alignment: "center" },
+          ] }],
+        ],
+      },
+      layout: { hLineWidth: (i) => (i === 1 ? 0 : 1.2), vLineWidth: () => 1.2, hLineColor: () => accent, vLineColor: () => accent },
+    });
+
+    const tag = (text, fill) => ({ table: { body: [[{ text, bold: true, fontSize: 8, characterSpacing: 0.6, color: "#ffffff", fillColor: fill, margin: [6, 2, 6, 2] }]] }, layout: "noBorders", margin: [0, 0, 0, 4] });
+    const sceneW = (CONTENT_W - 18) / 2;
+    const page0 = nn([
+      motTop(ctx, "Čo keby zajtra…", { text: ["…ste nemohli ísť do práce? Nie na týždeň. ", { text: "Na roky.", color: MOT_DANGER, bold: true }] }),
+      { text: "Ráno ešte obyčajný deň — káva, cesta do práce, správa od detí. Stačí jeden nepozorný vodič, jedna diagnóza, jeden zlý krok na schodoch. " +
+          "A zrazu sa doma nerieši, kam pôjdete v lete, ale z čoho zaplatíte ďalší mesiac.",
+        alignment: "center", fontSize: 11, color: ctx.brand.inkSecondary, lineHeight: 1.35, margin: [20, 0, 20, 12] },
+      {
+        columns: [
+          { width: sceneW, stack: [tag("BEZ POISTENIA", MOT_DANGER), { svg: LIFE_SCENES.alone, width: sceneW }] },
+          { width: sceneW, stack: [tag("S POISTENÍM", P), { svg: LIFE_SCENES.together, width: sceneW }] },
+        ],
+        columnGap: 18,
+      },
+      { text: [`Z vašej výplaty ${eur(m.net)} by zostalo len `, { text: eur(m.inv40), color: MOT_DANGER }, "."], alignment: "center", bold: true, fontSize: 16, color: INK, margin: [0, 14, 0, 2] },
+      { text: m.loans > 0 ? `Úver ${eur(m.loans)} sa pritom nezastaví — splátka príde aj v mesiaci, keď vy nemôžete.` : "Nájom, energie, nákupy a krúžky detí sa pritom nezastavia.",
+        alignment: "center", fontSize: 9.5, color: ctx.brand.muted },
+      motDivider(ctx),
+      { text: [
+        "Najväčší strach ľudí nie je z choroby.\n",
+        "Je z toho, že sa stanú ", { text: "bremenom", color: MOT_DANGER, bold: true }, " pre tých, ktorých ", { text: "milujú", color: P, bold: true }, ".",
+      ], alignment: "center", italics: true, fontSize: 14, color: INK, lineHeight: 1.3 },
+      motDivider(ctx),
+      { text: "Rozdiel medzi týmito dvoma obrázkami nie je šťastie.\nJe to jedno rozhodnutie urobené včas.", alignment: "center", bold: true, italics: true, fontSize: 13, color: INK, lineHeight: 1.3, margin: [0, 4, 0, 0] },
+    ]);
+
+    const page1 = nn([
+      motTop(ctx, "Životné poistenie", { text: "Nepoisťujeme sa preto, že čakáme nešťastie.\nPoisťujeme sa, aby jeden zlý deň nezmazal roky práce." }, true),
+      {
+        table: { widths: ["*", "*", "*"], body: [[chip("Čistý príjem dnes", eur(m.net)), chip("Vek", `${m.age} ${rokov(m.age)}`), chip("Do dôchodku", `${m.yearsToRet} ${rokov(m.yearsToRet)}`)]] },
+        layout: { hLineWidth: () => 0, vLineWidth: (i) => (i === 0 || i === 3 ? 0 : 8), vLineColor: () => "#ffffff", paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 },
+        margin: [0, 0, 0, 8],
+      },
+      { text: "Váš najcennejší majetok nie je byt ani auto. Je to vaša schopnosť zarábať.", alignment: "center", bold: true, fontSize: 10.5, color: INK },
+      { text: "KOĽKO MÁ HODNOTU?", alignment: "center", bold: true, fontSize: 8, characterSpacing: 1, color: ctx.brand.muted, margin: [0, 3, 0, 1] },
+      { text: [`Do ${m.retAge} rokov zarobíte ešte `, { text: eur(m.lifetime), color: P }], alignment: "center", bold: true, fontSize: 16, color: INK },
+      { text: "Keby to bol stroj vo fabrike, poistili by ste ho ako prvý. Pri sebe na to väčšina ľudí zabudne.", alignment: "center", italics: true, fontSize: 8.5, color: ctx.brand.muted, margin: [0, 2, 0, 0] },
+      { stack: [pill("Čo keď príjem vypadne?", P)], margin: [0, 8, 0, 4] },
+      centered({
+        table: { widths: [100, barW, "*"], body: [
+          barRow("Dnes zarábate", m.net, INK), barRow("Počas PN dostanete", m.sickness, MOT_DANGER),
+          barRow("Pri invalidite 40 %", m.inv40, MOT_DANGER), barRow("Pri invalidite 70 %", m.inv70, MOT_DANGER),
+        ] },
+        layout: { hLineWidth: () => 0, vLineWidth: () => 0, paddingTop: () => 1.5, paddingBottom: () => 1.5, paddingLeft: () => 4, paddingRight: () => 4 },
+        margin: [0, 2, 0, 4],
+      }, 400),
+      { text: [
+        "Pri invalidite vám bude každý mesiac chýbať ",
+        { text: ` ${eur(m.lossInv40)} `, bold: true, fontSize: 13, color: P, background: SOFT },
+        " — do dôchodku spolu ",
+        { text: ` ${eur(m.lossTotal40)} `, bold: true, fontSize: 13, color: P, background: SOFT },
+        ".",
+      ], alignment: "center", bold: true, fontSize: 10, color: INK, lineHeight: 1.3, margin: [24, 2, 24, 0] },
+      { text: `Počas PN chýba ${eur(m.lossSick)} mesačne${m.loans > 0 ? " a splátky úverov bežia ďalej" : " a výdavky sa nezastavia"}.`, alignment: "center", fontSize: 8.5, color: ctx.brand.muted, margin: [0, 3, 0, 0] },
+      m.family && m.family.gap > 0.5
+        ? box({ text: ["Keby ste tu zajtra neboli, rodine bude mesačne chýbať ", { text: eur(m.family.gap), bold: true }, `. Na ${m.family.years} ${rokov(m.family.years)} spolu s úvermi a pohrebom je to `, { text: eur(m.family.need), bold: true }, "."], fontSize: 9, color: INK, lineHeight: 1.25 }, MOT_DANGER_SOFT, "#e8b9b4", [0, 7, 0, 0])
+        : null,
+      {
+        columns: [
+          { width: "*", stack: [card("Bez poistenia", "Riziko nesiem sám", eur(m.lossTotal40), "strata pri invalidite do dôchodku", "Zaplatia to", "úspory, majetok, rodina", MOT_DANGER, MOT_DANGER_SOFT)] },
+          { width: 50, text: "ALEBO", bold: true, fontSize: 8.5, characterSpacing: 1, color: ctx.brand.muted, alignment: "center", margin: [0, 50, 0, 0] },
+          { width: "*", stack: [card("Poistený", "Riziko nesie poisťovňa", premiumText, m.premium ? "mesačne" : "mesačne (5–10 % príjmu)", "Príjem aj rodina", "zostanú chránené", P, SOFT)] },
+        ],
+        columnGap: 6,
+        margin: [30, 8, 30, 4],
+      },
+      { text: ["Za ", { text: premiumText, color: P }, " mesačne prenesiete na poisťovňu\nriziko v hodnote ", { text: eur(m.lossTotal40), color: P }, "."],
+        alignment: "center", bold: true, fontSize: 11.5, color: INK, lineHeight: 1.25 },
+    ]);
+
+    const riderRows = (items) => items.map((r) => [{ margin: [8, 5, 8, 5], stack: [
+      { columns: [
+        { text: r.label, bold: true, fontSize: 10, color: INK },
+        { text: eur(r.value) + String(r.unit || "").replace(/^€/, ""), bold: true, fontSize: 10, color: P, alignment: "right", width: "auto" },
+      ], columnGap: 6 },
+      { text: r.pitch || "", fontSize: 8.5, color: ctx.brand.inkSecondary, lineHeight: 1.2, margin: [0, 2, 0, 0] },
+    ] }]);
+    const group = (title, items, head, fill) => (items && items.length ? {
+      table: { widths: ["*"], body: [[{ text: title.toUpperCase(), bold: true, fontSize: 8.5, characterSpacing: 0.6, color: head, fillColor: fill, margin: [8, 5, 8, 5] }], ...riderRows(items)] },
+      layout: { hLineWidth: (i) => (i === 0 ? 0 : 0.6), vLineWidth: () => 0, hLineColor: () => ctx.brand.hairline },
+      margin: [0, 0, 0, 10],
+    } : null);
+
+    const page2 = nn([
+      motTop(ctx, "Čo a prečo poisťujeme", { text: ["Najprv to, čo by vás ", { text: "finančne položilo", color: MOT_DANGER, bold: true }, ", až potom to, čo vás ", { text: "iba zamrzí", color: P, bold: true }, "."] }),
+      group("Kľúčové krytie", m.core, MOT_DANGER, MOT_DANGER_SOFT),
+      group("Doplnkové krytie", m.extra, P, SOFT),
+      motDivider(ctx),
+      { text: [
+        "Poistenie si ", { text: "nekupujete pre seba", color: MOT_DANGER, bold: true }, ".\n",
+        "Kupujete ho pre tých, ktorí by inak ", { text: "zaplatili účet za zlý deň", color: P, bold: true }, ".",
+      ], alignment: "center", italics: true, fontSize: 13, color: INK, lineHeight: 1.3 },
+      motDivider(ctx),
+      { text: "Najlacnejšie poistenie je to, ktoré uzavriete, kým ste zdravý.", alignment: "center", bold: true, italics: true, fontSize: 12, color: INK, margin: [0, 4, 0, 8] },
+      { text: "Odporúčané sumy sú minimálne a vychádzajú z čistého príjmu, úverov a dávok Sociálnej poisťovne (nemocenská 55 % hrubej mzdy, invalidný dôchodok podľa odpracovaných rokov a percenta invalidity). " +
+          "Strata do dôchodku = mesačný výpadok × 12 × roky do dôchodku, v dnešných cenách. Ilustratívny prepočet, nie je ponukou poistenia.",
+        alignment: "center", fontSize: 7.5, color: ctx.brand.muted, lineHeight: 1.25 },
+    ]);
+
+    return [
+      { stack: page0 },
+      { stack: page1, pageBreak: "before" },
+      { stack: page2, pageBreak: "before" },
+      { text: "", pageBreak: "after" },
+    ];
+  }
+
   function renderRetirement(ctx, r) {
     const keys = ["statePension", "pillar2", "pillar3", "investments", "rental", "other"];
     const src = keys.map((k, i) => ({ k, label: L.retirementSources[k], value: r.sources[k] || 0, color: SERIES[i] })).filter((x) => x.value > 0);
@@ -1237,8 +1447,9 @@
     let num = 2;
     SECTIONS.forEach((s) => {
       if (!active.includes(s.key)) return;
-      // Renta s úvodom pre klienta začína vždy na novej strane (úvod zaberá celú stranu).
-      const mode = s.key === "retirement" && data.retirement && data.retirement.motivation && breaks !== "never" ? "always" : breaks;
+      // Renta a Zabezpečenie s úvodom pre klienta začínajú vždy na novej strane (úvod zaberá celú stranu).
+      const hasIntro = (s.key === "retirement" || s.key === "security") && data[s.key] && data[s.key].motivation;
+      const mode = hasIntro && breaks !== "never" ? "always" : breaks;
       content.push(...h1(ctx, num++, L.modules[s.key], null, mode));
       content.push(...s.render(ctx, data[s.key]));
     });

@@ -30,6 +30,8 @@ Jednoduchá single-page kalkulačka (React cez CDN + Tailwind CSS, žiadny build
 
 `zivotna-kalkulacka.html` — minimálne odporúčané poistné sumy životného poistenia v rovnakom dizajne.
 
+- Úvod pre klienta (dá sa skryť), rovnako ako pri dôchodku: príbeh „Čo keby zajtra…“ s ilustráciami (bez poistenia vs. s poistením), „Váš najcennejší majetok je schopnosť zarábať“ — koľko klient zarobí do dôchodku, čo z príjmu zostane pri PN a invalidite, **Bez poistenia vs. Poistený** a na druhej strane **Čo a prečo poisťujeme** (kľúčové a doplnkové krytie s vysvetlením pre klienta). Čísla sú tie isté ako v detaile kalkulačky; v PDF z kalkulačky aj vo finančnom pláne tvorí prvé tri strany kapitoly Zabezpečenie
+
 - Čistý príjem vypočítaný z hrubej mzdy (dá sa prepísať), suma úverov, vek a odpracované roky
 - Dávky Sociálnej poisťovne: nemocenská, invalidný dôchodok (podľa % invalidity), sirotský a vdovský dôchodok
 - Strata príjmu pri invalidite a PN, aj celková strata do dôchodku

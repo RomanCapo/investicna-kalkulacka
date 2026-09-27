@@ -165,6 +165,7 @@ export interface SecuritySection {
   premiumBudget?: { min: number; max: number; current: number; proposed?: number };
   people?: InsuredPerson[];
   contracts?: ExistingContract[];  // insurance contracts the client already has
+  motivation?: SecurityMotivation; // client-facing intro pages ("bez poistenia vs. poistený")
 }
 
 export interface ExistingContract {
@@ -213,6 +214,31 @@ export interface RetirementSection {
   note?: string;                   // e.g. which planned investment covers the gap
   motivation?: RetirementMotivation; // client-facing intro pages ("ponožka vs. pripravený")
 }
+
+// Computed in zivotna-kalkulacka.html (computeLifeMotivation); amounts in today's money, adult person.
+export interface SecurityMotivation {
+  net: number;                     // today's net income
+  age: number;
+  retAge: number;
+  yearsToRet: number;
+  loans: number;
+  lifetime: number;                // net income until retirement (net × 12 × years)
+  sickness: number;                // sickness benefit per month
+  lossSick: number;
+  inv40: number;                   // invalidity pension at 40 % / 70 %
+  inv70: number;
+  lossInv40: number;
+  lossInv70: number;
+  lossTotal40: number;             // income lost until retirement at 40 % invalidity
+  family: { gap: number; need: number; years: number } | null;
+  premium: number | null;          // premium from the offer, else budget range below
+  budgetLo: number;
+  budgetHi: number;
+  core: SecurityMotivationRider[]; // risks that would ruin the family
+  extra: SecurityMotivationRider[];
+}
+
+export interface SecurityMotivationRider { key: string; label: string; unit: string; value: number; pitch: string }
 
 // Computed in dochodkova-kalkulacka.html (computeMotivation); amounts in today's money unless noted.
 export interface RetirementMotivation {
