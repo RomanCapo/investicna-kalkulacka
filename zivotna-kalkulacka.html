@@ -1060,6 +1060,7 @@ function App() {
   useEffect(() => {
     if (!exporting) return;
     let cancelled = false;
+    const scrollBack = window.scrollY;
     (async () => {
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       if (cancelled) return;
@@ -1074,10 +1075,13 @@ function App() {
           .normalize("NFD").replace(/[̀-ͯ]/g, "")
           .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
         const filename = `zivotna-kalkulacka-${nameSlug ? nameSlug + "-" : ""}${dateSlug}.pdf`;
+        // html2canvas kreslí s posunom podľa aktuálneho scrollu — pri posunutej stránke
+        // by vyšli prázdne strany. Preto export vždy od vrchu stránky.
+        window.scrollTo(0, 0);
         const blob = await window.html2pdf().set({
           margin: [10, 10, 14, 10],
           image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, backgroundColor: "#ffffff", useCORS: true },
+          html2canvas: { scale: 2, backgroundColor: "#ffffff", useCORS: true, scrollX: 0, scrollY: 0 },
           jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
           pagebreak: { mode: ["css", "legacy"], avoid: [".pdf-avoid-break"] },
         }).from(el).outputPdf("blob");
@@ -1099,7 +1103,7 @@ function App() {
           URL.revokeObjectURL(url);
         }
       } finally {
-        if (!cancelled) setExporting(false);
+        if (!cancelled) { setExporting(false); requestAnimationFrame(() => window.scrollTo(0, scrollBack)); }
       }
     })();
     return () => { cancelled = true; };

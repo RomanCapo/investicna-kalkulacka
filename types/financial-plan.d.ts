@@ -211,6 +211,42 @@ export interface RetirementSection {
   };
   requiredExtraMonthlyInvestment?: number;
   note?: string;                   // e.g. which planned investment covers the gap
+  motivation?: RetirementMotivation; // client-facing intro pages ("ponožka vs. pripravený")
+}
+
+// Computed in dochodkova-kalkulacka.html (computeMotivation); amounts in today's money unless noted.
+export interface RetirementMotivation {
+  currentNet: number;              // today's net income
+  statePillars: number;            // state pension (1st + 2nd pillar)
+  target: number;                  // desired income in retirement
+  gap: number;
+  age: number;
+  retAge: number;
+  yearsToRet: number;
+  dropPct: number | null;
+  capNeedReal: number;             // capital needed at retirement
+  capNeedNom: number;              // same, nominal (with inflation)
+  sockMonthly: number;             // saving without returns
+  sockTotal: number;
+  fundMonthly: number | null;      // = requiredMonthly of the calculator (first year, then + dynamization)
+  fundTotal: number | null;
+  dynamization: number;            // yearly increase of the monthly investment, %
+  currentMonthly: number;          // what the client invests today
+  ownRenta: number;                // renta from today's investing
+  p3Renta: number;
+  totalIncome: number;             // state + pillars + own renta (same as the calculator detail)
+  missing: number;                 // still missing to the target with today's investing
+  extraMonthly: number | null;     // fundMonthly − currentMonthly
+  pension: {                       // how the state pension was estimated
+    mode: "estimate" | "manual";
+    state: number; p2: number; wage: number; avgWage: number; pomb: number; adh: number;
+    years: number; effYears: number; p2Enabled: boolean;
+  };
+  early: { age: number; monthly: number | null; capitalReal: number }[];
+  netReturn: number;
+  inflation: number;
+  perpetual: boolean;
+  endAge: number;
 }
 
 // ---------------------------------------------------------------- Income scaling

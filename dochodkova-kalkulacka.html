@@ -193,6 +193,130 @@
     .fade-in { animation: none; }
   }
   ::selection { background: var(--accent-soft); }
+
+  /* ─── Motivačný úvod pre klienta (rovnaký na obrazovke aj v PDF) — farby a štýl kalkulačiek ─── */
+  .mot { --m-ink: #10231f; --m-sec: #4b5b57; --m-muted: #7c8b86; --m-line: #e3e8e5; --m-tint: #f5f7f5;
+    --m-accent: #0f6b5c; --m-accent-soft: #e3f1ec; --m-danger: #c23b32; --m-danger-soft: #f8e8e6;
+    background: #ffffff; color: var(--m-ink); border: 1px solid var(--m-line); border-radius: 16px; overflow: hidden;
+    font-family: "Manrope", system-ui, sans-serif; }
+  .mot .num { font-variant-numeric: tabular-nums; }
+  .mot-page { position: relative; padding: 30px 36px 30px; }
+  .mot-page + .mot-page { border-top: 1px solid var(--m-line); }
+  .mot-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 2px solid var(--m-accent); margin-bottom: 18px; }
+  .mot-label { font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--m-accent); }
+  .mot-logo { height: 26px; width: auto; display: block; }
+  .mot-title { font-size: 28px; font-weight: 800; letter-spacing: -0.01em; color: var(--m-ink); line-height: 1.15; }
+  .mot-quote { font-size: 15px; font-style: italic; font-weight: 600; color: var(--m-sec); margin-top: 6px; line-height: 1.5; }
+  .mot-chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 20px 0 18px; }
+  .mot-chip { background: var(--m-tint); border: 1px solid var(--m-line); border-radius: 12px; padding: 10px 14px; }
+  .mot-chip span { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--m-muted); }
+  .mot-chip strong { display: block; font-size: 19px; font-weight: 800; color: var(--m-ink); margin-top: 2px; }
+  .mot-center { text-align: center; }
+  .mot-lead { font-size: 16px; font-weight: 700; color: var(--m-ink); line-height: 1.45; }
+  .mot-why { font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--m-muted); margin: 10px 0 4px; }
+  .mot-big { font-size: 24px; font-weight: 800; color: var(--m-ink); line-height: 1.3; }
+  .mot-big b { color: var(--m-danger); font-weight: 800; white-space: nowrap; }
+  .mot-bars { max-width: 500px; margin: 14px auto 6px; display: grid; gap: 8px; text-align: left; }
+  .mot-bar { display: grid; grid-template-columns: 140px minmax(0, 1fr) 76px; align-items: center; gap: 10px; font-size: 12px; font-weight: 700; color: var(--m-sec); }
+  .mot-bar i { display: block; height: 12px; border-radius: 6px; }
+  .mot-bar strong { text-align: right; color: var(--m-ink); font-size: 13px; font-weight: 800; }
+  .mot-explain { max-width: 640px; margin: 10px auto 0; background: var(--m-tint); border: 1px solid var(--m-line); border-radius: 10px; padding: 8px 12px; font-size: 11.5px; line-height: 1.5; color: var(--m-sec); text-align: left; }
+  .mot-explain b { color: var(--m-ink); }
+  .mot-pill { display: inline-block; background: var(--m-accent); color: #fff; font-weight: 800; font-size: 20px; padding: 8px 22px; border-radius: 12px; margin: 18px 0 12px; }
+  .mot-need { font-size: 15px; font-weight: 700; color: var(--m-ink); line-height: 1.6; max-width: 640px; margin: 0 auto; }
+  .mot-need b { display: inline-block; font-size: 19px; font-weight: 800; color: var(--m-accent); background: var(--m-accent-soft); border-radius: 8px; padding: 0 8px; margin: 0 2px; }
+  .mot-need .gen { color: var(--m-accent); }
+  .mot-small { font-size: 12.5px; font-style: italic; color: var(--m-muted); margin-top: 10px; }
+  .mot-strong { font-size: 16px; font-weight: 800; color: var(--m-ink); margin-top: 6px; line-height: 1.4; }
+  .mot-duel { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 14px; align-items: stretch; margin: 20px auto 16px; max-width: 620px; }
+  .mot-card { border: 2px solid var(--m-line); border-radius: 14px; overflow: hidden; background: #fff; text-align: center; display: flex; flex-direction: column; }
+  .mot-card .hd { padding: 12px 12px 10px; }
+  .mot-card.sock { border-color: var(--m-danger); }
+  .mot-card.sock .hd { background: var(--m-danger-soft); }
+  .mot-card.ready { border-color: var(--m-accent); }
+  .mot-card.ready .hd { background: var(--m-accent-soft); }
+  .mot-card h4 { margin: 0; font-size: 20px; font-weight: 800; }
+  .mot-card.sock h4 { color: var(--m-danger); }
+  .mot-card.ready h4 { color: var(--m-accent); }
+  .mot-card .sub { font-size: 12.5px; font-style: italic; color: var(--m-sec); margin-top: 2px; }
+  .mot-card .body { padding: 12px 12px 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; justify-content: center; }
+  .mot-card .amount { font-size: 26px; font-weight: 800; color: var(--m-ink); line-height: 1.1; }
+  .mot-card .amount small { display: block; font-size: 11px; font-weight: 700; color: var(--m-muted); margin-top: 3px; }
+  .mot-card .total { font-size: 12px; color: var(--m-sec); }
+  .mot-card .total b { display: block; font-size: 15px; font-weight: 800; color: var(--m-ink); }
+  .mot-card .hint { font-size: 10.5px; color: var(--m-muted); }
+  .mot-or { align-self: center; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--m-muted); }
+  .mot-win { font-size: 17px; font-weight: 800; color: var(--m-ink); line-height: 1.5; }
+  .mot-win u { color: var(--m-accent); text-decoration-thickness: 2px; }
+  .mot-win b { color: var(--m-accent); white-space: nowrap; }
+  .mot-status { max-width: 640px; margin: 14px auto 0; border-radius: 12px; padding: 10px 14px; font-size: 13px; font-weight: 600; line-height: 1.5; text-align: left; background: var(--m-accent-soft); color: var(--m-ink); border: 1px solid rgba(15,107,92,0.28); }
+  .mot-status.warn { background: var(--m-danger-soft); border-color: rgba(194,59,50,0.28); }
+  .mot-sub-title { font-size: 15px; font-style: italic; font-weight: 600; color: var(--m-sec); margin-top: 6px; line-height: 1.5; }
+  .mot-sub-title .no { color: var(--m-danger); font-weight: 800; }
+  .mot-sub-title .yes { color: var(--m-accent); font-weight: 800; }
+  .mot-scenes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 18px 0; }
+  .mot-scene { position: relative; border-radius: 14px; border: 1px solid var(--m-line); overflow: hidden; aspect-ratio: 16 / 10; }
+  .mot-scene img { width: 100%; height: 100%; display: block; object-fit: cover; }
+  .mot-tag { position: absolute; top: 10px; left: 10px; background: var(--m-danger); color: #fff; font-weight: 800; font-size: 11.5px; padding: 4px 10px; border-radius: 999px; letter-spacing: .06em; }
+  .mot-tag.good { left: auto; right: 10px; background: var(--m-accent); }
+  .mot-divider { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 14px 0; }
+  .mot-divider::before, .mot-divider::after { content: ""; height: 1px; width: 120px; background: var(--m-line); }
+  .mot-divider span { width: 6px; height: 6px; border-radius: 50%; background: var(--m-accent); }
+  .mot-some { font-size: 20px; font-style: italic; color: var(--m-ink); line-height: 1.5; }
+  .mot-some .no { color: var(--m-danger); font-weight: 800; }
+  .mot-some .yes { color: var(--m-accent); font-weight: 800; }
+  .mot-early { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 14px 0 14px; }
+  .mot-early > div { background: var(--m-accent-soft); border: 1px solid rgba(15,107,92,0.18); border-radius: 14px; padding: 14px 12px; text-align: center; }
+  .mot-early .when { font-size: 18px; font-weight: 800; color: var(--m-accent); }
+  .mot-early .must { font-size: 12.5px; font-weight: 600; color: var(--m-sec); margin: 4px 0 10px; }
+  .mot-early .val { display: inline-block; background: var(--m-accent); color: #fff; font-weight: 800; font-size: 16px; border-radius: 999px; padding: 5px 14px; }
+  .mot-early .val small { font-size: 11px; font-weight: 700; }
+  .mot-end { font-size: 17px; font-weight: 800; font-style: italic; color: var(--m-ink); }
+  .mot-note { font-size: 10.5px; color: var(--m-muted); margin-top: 14px; text-align: center; line-height: 1.5; }
+  @media (max-width: 640px) {
+    .mot-page { padding: 22px 16px 22px; }
+    .mot-logo { height: 20px; }
+    .mot-chips, .mot-early { grid-template-columns: 1fr; }
+    .mot-duel { grid-template-columns: 1fr; }
+    .mot-scenes { grid-template-columns: 1fr; }
+    .mot-bar { grid-template-columns: 96px minmax(0, 1fr) 70px; }
+    .mot-big { font-size: 20px; }
+  }
+  /* V PDF (šírka 714 px) sa úvod zmestí na dve A4 strany. */
+  .mot.print { border: none; border-radius: 0; }
+  /* Horných pár pixelov strany ostáva biele — html2pdf pri delení strán občas „presiakne“ o 1–2 px. */
+  .mot.print .mot-page { padding: 14px 6px 0; }
+  .mot.print .mot-page + .mot-page { border-top: none; }
+  /* PDF má pevnú šírku A4 — vždy stolové rozloženie, aj keď sa exportuje z mobilu. */
+  .mot.print .mot-logo { height: 26px; }
+  .mot.print .mot-chips, .mot.print .mot-early { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mot.print .mot-duel { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+  .mot.print .mot-scenes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mot.print .mot-bar { grid-template-columns: 140px minmax(0, 1fr) 76px; }
+  .mot.print .mot-big { font-size: 21px; }
+  /* Kompaktnejšie medzery, aby každá strana úvodu vyšla presne na jednu A4. */
+  .mot.print .mot-top { margin-bottom: 12px; padding-bottom: 8px; }
+  .mot.print .mot-title { font-size: 24px; }
+  .mot.print .mot-quote { font-size: 13.5px; margin-top: 4px; line-height: 1.4; }
+  .mot.print .mot-chips { margin: 12px 0 12px; }
+  .mot.print .mot-chip { padding: 7px 12px; }
+  .mot.print .mot-chip strong { font-size: 17px; }
+  .mot.print .mot-lead { font-size: 14.5px; }
+  .mot.print .mot-why { margin: 6px 0 2px; }
+  .mot.print .mot-bars { margin: 10px auto 4px; gap: 6px; }
+  .mot.print .mot-explain { font-size: 10.5px; padding: 6px 10px; margin-top: 8px; }
+  .mot.print .mot-pill { font-size: 17px; padding: 6px 18px; margin: 12px 0 8px; }
+  .mot.print .mot-need { font-size: 13.5px; line-height: 1.5; }
+  .mot.print .mot-need b { font-size: 17px; }
+  .mot.print .mot-small { font-size: 11.5px; margin-top: 6px; }
+  .mot.print .mot-strong { font-size: 14.5px; }
+  .mot.print .mot-duel { margin: 12px auto 10px; }
+  .mot.print .mot-card .hd { padding: 8px 10px 7px; }
+  .mot.print .mot-card h4 { font-size: 17px; }
+  .mot.print .mot-card .body { padding: 8px 10px 10px; gap: 5px; }
+  .mot.print .mot-card .amount { font-size: 22px; }
+  .mot.print .mot-win { font-size: 14.5px; line-height: 1.45; }
+  .mot.print .mot-status { font-size: 12px; padding: 8px 12px; margin-top: 10px; }
 </style>
 
 <div id="root"></div>
@@ -652,7 +776,7 @@ function computeRetirement(v) {
 
   return {
     age, retAge, endAge, yearsToRet, payYears, retYear,
-    wage, avgWage, adh, yearsWorked, totalYears, pomb, estimatedPension, statePension, pensionMode: v.pensionMode,
+    wage, avgWage, adh, yearsWorked, totalYears, reducedYears, pomb, estimatedPension, statePension, pensionMode: v.pensionMode,
     p2Enabled, p2Balance, p2Rate, p2Return, p2Monthly, p2CapitalNom, p2CapitalReal, p2Renta, p2Reduction, basePension,
     p3Enabled, p3Balance, p3Client, p3Employer, p3Dyn, p3Return, p3CapitalNom, p3CapitalReal, p3Renta, p3EmployerTotal, p3ClientTotal, p3TaxSaving,
     target, inflation, returnAcc, costs, returnPay, dynamization: dyn * 100,
@@ -663,6 +787,80 @@ function computeRetirement(v) {
     boostPct: basePension > 0 ? (renta / basePension) * 100 : null,
     points, yearly,
   };
+}
+
+// ─── Motivačný úvod pre klienta („ponožka vs. pripravený“, predčasný dôchodok) ───
+// Používa presne tie isté čísla ako výpočet vyššie, aby úvod a detail nikdy neprotirečili:
+// „Pripravený“ = potrebná mesačná investícia z kalkulačky (prvý rok, ďalej s dynamizáciou),
+// „Ponožka“ = ten istý kapitál odkladaný bez zhodnotenia rovnakou sumou každý mesiac.
+function computeMotivation(c, currentNet) {
+  const im = Math.pow(1 + c.inflation / 100, 1 / 12) - 1;
+  const rAcc = monthlyRateFromAnnual(c.returnAcc - c.costs);
+  const monthsAcc = c.yearsToRet * 12;
+  const monthsPay = c.payYears * 12;
+  const dyn = c.dynamization / 100;
+  const common = { dyn, rAcc, im, startAge: c.age };
+  const statePillars = c.statePension + c.p2Renta;           // čo dá štát (1. a 2. pilier)
+  const gap = Math.max(0, c.target - c.basePension);          // vlastnými peniazmi treba pokryť (= gapToCover)
+  // Kapitál, ktorý vypláca `income` mesačne (v dnešných cenách) počas `months` alebo doživotne z výnosov.
+  const capitalFor = (income, months) => c.perpetual
+    ? (c.rrPay > 0 ? income / c.rrPay : Infinity)
+    : income * annuityFactor(c.rrPay, months);
+  const capNeedReal = gap > 0 ? capitalFor(gap, monthsPay) : 0;
+  const capNeedNom = capNeedReal * c.deflRet;
+  const ok = (x) => isFinite(x) && x != null;
+
+  // Potrebný mesačný vklad (prvý rok), aby sa za `months` nasporilo `targetNom` (so súčasnými úsporami).
+  const monthlyFor = (targetNom, months) => {
+    if (!ok(targetNom) || months <= 0) return null;
+    const fvExisting = accumulate({ ...common, monthsAcc: months, savings: c.savings, monthly: 0 }).balance;
+    const fvUnit = accumulate({ ...common, monthsAcc: months, savings: 0, monthly: 1 }).balance;
+    return fvUnit > 0 ? Math.max(0, (targetNom - fvExisting) / fvUnit) : null;
+  };
+  const paidIn = (monthly) => (monthly == null ? null : accumulate({ ...common, monthsAcc, savings: 0, monthly }).invNom);
+  const fundMonthly = capNeedReal > 0 ? c.requiredMonthly : 0;
+  const sockMonthly = capNeedReal > 0 && ok(capNeedNom) && monthsAcc > 0 ? Math.max(0, (capNeedNom - c.savings) / monthsAcc) : 0;
+  const currentMonthly = c.investEnabled ? c.monthly : 0;
+
+  // Predčasný odchod v `E` rokoch: do štátneho dôchodku celý cieľový príjem z vlastných
+  // peňazí, od štátneho dôchodku už len chýbajúca časť.
+  const early = [50, 55, 60, 62].filter((E) => E >= c.age + 3 && E < c.retAge).slice(-3).map((E) => {
+    const months = (E - c.age) * 12;
+    const bridge = (c.retAge - E) * 12;
+    const capReal = c.target * annuityFactor(c.rrPay, bridge) + (ok(capNeedReal) ? capNeedReal / Math.pow(1 + c.rrPay, bridge) : Infinity);
+    return { age: E, capitalReal: capReal, monthly: monthlyFor(capReal * Math.pow(1 + im, months), months) };
+  });
+
+  return {
+    currentNet, statePillars, target: c.target, gap, age: c.age, retAge: c.retAge, yearsToRet: c.yearsToRet,
+    dropPct: currentNet > 0 ? Math.max(0, (1 - statePillars / currentNet) * 100) : null,
+    capNeedReal, capNeedNom,
+    sockMonthly, sockTotal: sockMonthly * monthsAcc,
+    fundMonthly, fundTotal: capNeedReal > 0 ? paidIn(fundMonthly) : 0, dynamization: c.dynamization,
+    // Čo klient už robí — rovnaké čísla ako v detaile kalkulačky.
+    currentMonthly, ownRenta: c.investEnabled ? c.renta : 0, p3Renta: c.p3Renta, totalIncome: c.totalIncome,
+    missing: Math.max(0, c.gap), extraMonthly: fundMonthly != null ? Math.max(0, fundMonthly - currentMonthly) : null,
+    // Ako sa počítal štátny dôchodok.
+    pension: {
+      mode: c.pensionMode === "manual" ? "manual" : "estimate",
+      state: c.statePension, p2: c.p2Renta, wage: c.wage, avgWage: c.avgWage, pomb: c.pomb, adh: c.adh,
+      years: c.totalYears, effYears: Math.max(0, c.totalYears - c.reducedYears), p2Enabled: c.p2Enabled,
+    },
+    early,
+    netReturn: c.returnAcc - c.costs, inflation: c.inflation, perpetual: c.perpetual, endAge: c.endAge,
+  };
+}
+
+// Jedna veta, ako vznikol štátny dôchodok (na úvod aj do PDF).
+function pensionExplain(p) {
+  const n2 = (x) => new Intl.NumberFormat("sk-SK", { maximumFractionDigits: 2 }).format(x);
+  const n1 = (x) => new Intl.NumberFormat("sk-SK", { maximumFractionDigits: 1 }).format(x);
+  const eur = (x) => fmtEUR(Math.round(x));
+  const state = p.mode === "manual"
+    ? `Štátny dôchodok ${eur(p.state)} je zadaný ručne (napr. z listu Sociálnej poisťovne).`
+    : `Štátny dôchodok ${eur(p.state)} = osobný mzdový bod ${new Intl.NumberFormat("sk-SK", { maximumFractionDigits: 3 }).format(p.pomb)} (mzda ${eur(p.wage)} ÷ priemerná mzda ${eur(p.avgWage)}) × ` +
+      `${n1(p.effYears)} rokov poistenia${p.p2Enabled ? " (po krátení za 2. pilier)" : ""} × ADH ${n2(p.adh)} €.`;
+  return p.p2Enabled && p.p2 > 0.5 ? `${state} K tomu renta z 2. piliera ${eur(p.p2)}.` : state;
 }
 
 // Vodorovný skladaný pruh: štátny dôchodok + renta z investícií, prípadne
@@ -1041,7 +1239,211 @@ function YearlyTable({ calc }) {
   );
 }
 
-function PrintDocument({ printRef, clientName, calc }) {
+// ─── Motivačný úvod: dve „stránky“ pre klienta (na obrazovke aj na začiatku PDF) ───
+const eurR = (n) => (n == null || !isFinite(n) ? "—" : fmtEUR(Math.round(n)));
+const rokov = (n) => (n === 1 ? "rok" : n >= 2 && n <= 4 ? "roky" : "rokov");
+
+// Grafika úvodu ako SVG obrázky (data URL) — html2pdf ich vykreslí spoľahlivo,
+// na rozdiel od SVG vloženého priamo do stránky.
+const svgUrl = (svg) => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+
+// Ilustrácie namiesto fotiek: „v práci“ a „na dovolenke“ (farby kalkulačiek).
+const WORK_SVG = svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200">
+  <rect width="320" height="200" fill="#eef2f0"/>
+  ${[40, 78, 116].map((y) => `<rect x="18" y="${y}" width="150" height="6" rx="3" fill="#cfd9d5"/>`).join("")}
+  ${[22, 52, 84, 118, 142].map((x, i) => `<rect x="${x}" y="${18 + (i % 2) * 4}" width="20" height="22" rx="3" fill="${["#d08a16", "#9fb8b0", "#c23b32", "#0f6b5c", "#9fb8b0"][i]}" opacity="0.75"/>`).join("")}
+  ${[26, 60, 96, 130].map((x, i) => `<rect x="${x}" y="${56 + (i % 2) * 3}" width="24" height="22" rx="3" fill="${["#9fb8b0", "#d08a16", "#9fb8b0", "#c23b32"][i]}" opacity="0.65"/>`).join("")}
+  ${[24, 58, 92, 126].map((x, i) => `<rect x="${x}" y="${94 + (i % 2) * 3}" width="26" height="20" rx="3" fill="${["#0f6b5c", "#9fb8b0", "#d08a16", "#9fb8b0"][i]}" opacity="0.65"/>`).join("")}
+  <rect x="0" y="146" width="320" height="54" fill="#10231f"/>
+  <rect x="176" y="112" width="92" height="40" rx="6" fill="#2b4a43"/>
+  <rect x="188" y="120" width="44" height="14" rx="3" fill="#bfe3d6"/>
+  <circle cx="252" cy="127" r="6" fill="#d08a16"/>
+  <circle cx="268" cy="54" r="30" fill="#ffffff" stroke="#10231f" stroke-width="5"/>
+  <line x1="268" y1="54" x2="268" y2="34" stroke="#10231f" stroke-width="5" stroke-linecap="round"/>
+  <line x1="268" y1="54" x2="283" y2="62" stroke="#c23b32" stroke-width="5" stroke-linecap="round"/>
+  <text x="160" y="182" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#ffffff">zmena 6:00 – 14:00</text>
+</svg>`);
+
+const HOLIDAY_SVG = svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200">
+  <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d5eeea"/><stop offset="1" stop-color="#fbf4e4"/></linearGradient></defs>
+  <rect width="320" height="200" fill="url(#sky)"/>
+  <circle cx="252" cy="52" r="26" fill="#e3a33b"/>
+  <path d="M0 132 Q40 122 80 132 T160 132 T240 132 T320 132 V200 H0Z" fill="#5cb8aa"/>
+  <path d="M0 150 Q40 140 80 150 T160 150 T240 150 T320 150 V200 H0Z" fill="#2f9486"/>
+  <rect x="0" y="168" width="320" height="32" fill="#efe1c2"/>
+  <path d="M70 170 C74 130 70 104 80 78" stroke="#8a5a2b" stroke-width="8" fill="none" stroke-linecap="round"/>
+  ${[[-60, "#0f6b5c"], [-20, "#1baf7a"], [20, "#0f6b5c"], [60, "#1baf7a"], [150, "#0c5a4d"]].map(([a, c]) => `<ellipse cx="80" cy="78" rx="34" ry="9" fill="${c}" transform="rotate(${a} 80 78) translate(24 0)"/>`).join("")}
+  <rect x="170" y="158" width="58" height="8" rx="4" fill="#ffffff" transform="rotate(-14 199 162)"/>
+  <rect x="236" y="160" width="58" height="8" rx="4" fill="#ffffff" transform="rotate(-14 265 164)"/>
+  <rect x="218" y="122" width="6" height="44" fill="#c23b32"/>
+  <path d="M186 124 Q221 96 256 124 Z" fill="#c23b32"/>
+  <path d="M204 124 Q221 106 238 124 Z" fill="#ffffff" opacity="0.6"/>
+</svg>`);
+
+const SceneWork = () => <img src={WORK_SVG} alt="Dôchodca v práci" width="320" height="200" />;
+const SceneHoliday = () => <img src={HOLIDAY_SVG} alt="Dôchodcovia na dovolenke" width="320" height="200" />;
+
+function MotTop({ label }) {
+  return (
+    <div className="mot-top">
+      <span className="mot-label">{label}</span>
+      <img className="mot-logo" src={LOGO_DATA_URI} alt="FinCoach" />
+    </div>
+  );
+}
+
+function MotivationPages({ m, print }) {
+  const hasGap = m.capNeedReal > 0.5 && isFinite(m.capNeedReal);
+  const saveMonthly = (m.sockMonthly || 0) - (m.fundMonthly || 0);
+  const saveTotal = (m.sockTotal || 0) - (m.fundTotal || 0);
+  const barMax = Math.max(m.currentNet || 0, m.statePillars || 0, m.target || 0, 1);
+  const bar = (label, value, color) => (
+    <div className="mot-bar">
+      <span>{label}</span>
+      <i style={{ width: `${Math.max(3, (value / barMax) * 100)}%`, background: color }} />
+      <strong className="num">{eurR(value)}</strong>
+    </div>
+  );
+  const assumptions = `Sumy sú v dnešných cenách. Predpoklad: výnos ${fmtPct(m.netReturn)} ročne po nákladoch, inflácia ${fmtPct(m.inflation)}, ` +
+    `${m.perpetual ? "renta len z výnosov" : `renta do ${m.endAge} rokov`}` +
+    `${m.dynamization > 0 ? `, pravidelná investícia sa každý rok zvýši o ${fmtPct(m.dynamization)}` : ""}; ponožka = rovnaká suma každý mesiac bez zhodnotenia. ` +
+    `Ilustratívny prepočet, nie je investičné odporúčanie.`;
+
+  // Čo klient už robí — prepojenie úvodu s detailom kalkulácie.
+  let status = null;
+  if (hasGap && m.currentMonthly > 0.5) {
+    status = m.missing > 0.5
+      ? { warn: true, text: <>Dnes už investujete <b className="num">{eurR(m.currentMonthly)}</b> mesačne — renta z toho bude {eurR(m.ownRenta)}. Do cieľa ešte chýba {eurR(m.missing)} mesačne, preto treba pridať <b className="num">{eurR(m.extraMonthly)}</b> mesačne.</> }
+      : { warn: false, text: <>Dnes už investujete <b className="num">{eurR(m.currentMonthly)}</b> mesačne — to na cieľ stačí. Spolu budete mať {eurR(m.totalIncome)} mesačne.</> };
+  } else if (hasGap) {
+    status = { warn: true, text: <>Zatiaľ si na dôchodok pravidelne neodkladáte — celý rozdiel {eurR(m.missing)} mesačne treba vytvoriť.</> };
+  }
+
+  return (
+    <div className={`mot${print ? " print" : ""}`}>
+      <section className="mot-page">
+        <MotTop label="Úvod pre klienta · Renta" />
+        <div className="mot-title">Dôchodok</div>
+        <div className="mot-quote">Dôchodcovia – ich životné krédo? Ich životné heslo?<br />Žiť len zo spomienok!<br />Z dôchodku to nešlo…</div>
+
+        <div className="mot-chips">
+          <div className="mot-chip"><span>Čistý príjem dnes</span><strong className="num">{eurR(m.currentNet)}</strong></div>
+          <div className="mot-chip"><span>Vek</span><strong className="num">{m.age} {rokov(m.age)}</strong></div>
+          <div className="mot-chip"><span>Do dôchodku</span><strong className="num">{m.yearsToRet} {rokov(m.yearsToRet)}</strong></div>
+        </div>
+
+        <div className="mot-center">
+          <p className="mot-lead">Buď sa nedožijete dôchodku, alebo budete pracujúci dôchodca až do smrti.</p>
+          <p className="mot-why">Prečo?</p>
+          <p className="mot-big">Pretože váš dôchodok bude o {m.yearsToRet} {rokov(m.yearsToRet)} iba <b>{eurR(m.statePillars)}</b></p>
+          <div className="mot-bars">
+            {bar("Dnes zarábate", m.currentNet, "#10231f")}
+            {bar("Dôchodok od štátu", m.statePillars, "#c23b32")}
+            {bar("Chcete mať", m.target, "#0f6b5c")}
+          </div>
+          {m.dropPct != null && m.dropPct > 1 && (
+            <p style={{ fontSize: "13px", fontWeight: 700, color: "#4b5b57" }}>To je o <strong style={{ color: "#c23b32" }}>{Math.round(m.dropPct)} %</strong> menej, než dnes zarábate.</p>
+          )}
+          {m.pension && <p className="mot-explain"><b>Ako sme to počítali: </b>{pensionExplain(m.pension)} Sumy sú v dnešných cenách.</p>}
+
+          {hasGap ? (
+            <>
+              <div className="mot-pill">Ako to zmeniť?</div>
+              <p className="mot-need">
+                Pri odchode do dôchodku potrebujete mať na účte <b>{eurR(m.capNeedReal)}</b>, aby ste si udržali príjem {eurR(m.target)} mesačne —
+                tento balík peňazí vám bude <span className="gen">generovať ďalšie peniaze</span>.
+              </p>
+              <p className="mot-small" style={{ fontStyle: "normal", marginTop: "6px" }}>
+                Suma je v dnešných cenách — o {m.yearsToRet} {rokov(m.yearsToRet)} to s infláciou bude {eurR(m.capNeedNom)}.
+              </p>
+              <p className="mot-small">Ak ich máte, gratulujem — od zajtra môžete byť rentierom a nemusíte už chodiť do práce.</p>
+              <p className="mot-strong">Ak ich nemáte, musíte si ich vytvoriť odkladaním —<br />mesačne do ponožky, alebo tým správnym sporením.</p>
+
+              <div className="mot-duel">
+                <div className="mot-card sock">
+                  <div className="hd"><h4>Ponožka</h4><div className="sub">Už dnes si musíš odkladať</div></div>
+                  <div className="body">
+                    <div className="amount">{eurR(m.sockMonthly)}<small>mesačne</small></div>
+                    <div className="total">Celkovo odložím<b>{eurR(m.sockTotal)}</b></div>
+                  </div>
+                </div>
+                <div className="mot-or">alebo</div>
+                <div className="mot-card ready">
+                  <div className="hd"><h4>Pripravený</h4><div className="sub">Som s tým v pohode a rozumne sa pripravujem</div></div>
+                  <div className="body">
+                    <div className="amount">{eurR(m.fundMonthly)}<small>mesačne{m.dynamization > 0 ? ` (+${fmtPct(m.dynamization)} ročne)` : ""}</small></div>
+                    <div className="total">Celkovo odložím<b>{eurR(m.fundTotal)}</b></div>
+                  </div>
+                </div>
+              </div>
+
+              {saveMonthly > 0.5 && (
+                <p className="mot-win">
+                  Výhoda byť <u>pripravený</u> je v tom, že mesačne usporím <b>{eurR(saveMonthly)}</b><br />
+                  a celkovo <b>{eurR(saveTotal)}</b> za celé obdobie sporenia.
+                </p>
+              )}
+              {status && <p className={`mot-status${status.warn ? " warn" : ""}`}>{status.text}</p>}
+            </>
+          ) : (
+            <>
+              <div className="mot-pill">Ste na dobrej ceste</div>
+              <p className="mot-need">Štát a piliere pokryjú cieľový príjem {eurR(m.target)} mesačne. Stačí v tom vytrvať — a možno môžete ísť do dôchodku aj skôr.</p>
+            </>
+          )}
+        </div>
+      </section>
+
+      {print && <div className="html2pdf__page-break" />}
+
+      <section className="mot-page">
+        <MotTop label="Úvod pre klienta · Renta" />
+        <div className="mot-title">Predčasný dôchodok</div>
+        <div className="mot-sub-title">Kedy už <span className="no">nemusím</span> chodiť do práce, ale <span className="yes">chcem</span> pracovať</div>
+        <p className="mot-center" style={{ fontSize: "16px", fontStyle: "italic", color: "#4b5b57", marginTop: "14px", lineHeight: 1.5 }}>
+          Stačí naozaj málo, aby bol aj život na dôchodku plnohodnotný.<br />Rozhodnutie je na vás, ako chcete tráviť dôchodok.
+        </p>
+        <div className="mot-scenes">
+          <div className="mot-scene"><SceneWork /><span className="mot-tag">V PRÁCI</span></div>
+          <div className="mot-scene"><SceneHoliday /><span className="mot-tag good">NA DOVOLENKE</span></div>
+        </div>
+        <div className="mot-center">
+          <p className="mot-strong" style={{ fontSize: "18px" }}>Predstavte si odísť do dôchodku skôr, ako diktuje štát.<br />Užívať si dôchodok a nechodiť už do práce.</p>
+          <div className="mot-divider"><span /><span /><span /></div>
+          <p className="mot-some">
+            Niekto tento stav nedosiahne <span className="no">nikdy</span>,<br />
+            niekto v <strong>{m.retAge} rokoch</strong>,<br />
+            a pripravený to <span className="yes">dosiahne skôr</span>.
+          </p>
+          <div className="mot-divider"><span /><span /><span /></div>
+          {m.early.length > 0 ? (
+            <>
+              <p className="mot-strong">Čo preto musím spraviť?</p>
+              <div className="mot-early">
+                {m.early.map((e) => (
+                  <div key={e.age}>
+                    <div className="when">v {e.age} rokoch</div>
+                    <div className="must">už dnes si musím odkladať</div>
+                    <div className="val">{eurR(e.monthly)} <small>/ mes.</small></div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="mot-strong">Aj pár rokov skôr sa dá — prepočítajme si to spolu.</p>
+          )}
+          <p className="mot-end">Nikdy nie je neskoro, ani skoro začať.</p>
+        </div>
+        <p className="mot-note">
+          Predčasný dôchodok: do {m.retAge} rokov sa celý príjem {eurR(m.target)} vypláca z vlastných peňazí, potom už len rozdiel k štátnemu dôchodku.
+          Suma je prvý mesačný vklad{m.dynamization > 0 ? ", ďalej sa zvyšuje ako pri pravidelnej investícii" : ""}. {assumptions}
+        </p>
+      </section>
+    </div>
+  );
+}
+
+function PrintDocument({ printRef, clientName, calc, motivation, includeIntro }) {
   const dateStr = new Date().toLocaleDateString("sk-SK");
   const box = { border: "1px solid #e4e4e0", borderRadius: "8px", padding: "8px 10px" };
   const params = [
@@ -1050,7 +1452,7 @@ function PrintDocument({ printRef, clientName, calc }) {
     ["Renta do veku", calc.perpetual ? "doživotne z výnosov" : `${calc.endAge} rokov`],
     calc.pensionMode === "manual"
       ? ["Štátny dôchodok", "zadaný ručne"]
-      : ["Hrubá mzda / odprac. roky", `${fmtEUR(calc.wage)} / ${calc.totalYears} r.`],
+      : ["Hrubá mzda / roky poistenia", `${fmtEUR(calc.wage)} / ${calc.totalYears} r.`],
     ["Cieľový príjem", fmtEUR(calc.target) + " / mes."],
     ["Inflácia", fmtPct(calc.inflation)],
   ];
@@ -1088,7 +1490,7 @@ function PrintDocument({ printRef, clientName, calc }) {
       id="pdf-export-root"
       style={{
         width: "794px",
-        maxWidth: "100%",
+        maxWidth: "100%", // html2pdf vkladá dokument do rámu so šírkou tlačovej plochy (≈ 718 px)
         margin: "0 auto",
         background: "#ffffff",
         color: "#10231f",
@@ -1109,6 +1511,13 @@ function PrintDocument({ printRef, clientName, calc }) {
         "--danger-soft": "rgba(194,59,50,0.10)",
       }}
     >
+      {includeIntro && motivation && (
+        <>
+          <MotivationPages m={motivation} print />
+          <div className="html2pdf__page-break" />
+          <div style={{ height: "10px" }} />
+        </>
+      )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2px solid #0f6b5c", paddingBottom: "16px", marginBottom: "22px" }}>
         <img src={LOGO_DATA_URI} alt="FinCoach" style={{ height: "34px", width: "auto", display: "block" }} />
         <div style={{ textAlign: "right", fontSize: "11px", color: "#7c8b86" }}>
@@ -1143,11 +1552,32 @@ function PrintDocument({ printRef, clientName, calc }) {
           ))}
         </div>
         <IncomeBar calc={calc} colors={PRINT_COLORS} print />
-        {calc.gap > 0.5 && calc.requiredMonthly != null && (
-          <p style={{ marginTop: "12px", fontSize: "12px", color: "#10231f" }}>
-            Do cieľa chýba {fmtEUR(calc.gap)} mesačne — na jeho dosiahnutie treba investovať <strong>{fmtEUR(calc.requiredMonthly)} mesačne</strong>.
-          </p>
-        )}
+        <div style={{ marginTop: "14px", background: calc.gap > 0.5 ? "#f8e8e6" : "#e3f1ec", border: `1px solid ${calc.gap > 0.5 ? "rgba(194,59,50,0.28)" : "rgba(15,107,92,0.28)"}`, borderRadius: "8px", padding: "10px 12px", fontSize: "12px", lineHeight: 1.5, color: "#10231f" }}>
+          {calc.gap > 0.5 ? (
+            <>
+              Do cieľa {fmtEUR(calc.target)} chýba <strong>{fmtEUR(calc.gap)} mesačne</strong>.
+              {calc.requiredMonthly != null && <> Na jeho dosiahnutie treba investovať spolu <strong>{fmtEUR(calc.requiredMonthly)} mesačne</strong>
+                {calc.investEnabled && calc.monthly > 0 ? <> — teda o {fmtEUR(Math.max(0, calc.requiredMonthly - calc.monthly))} viac ako dnes ({fmtEUR(calc.monthly)})</> : null}
+                {calc.dynamization > 0 ? <>, s ročným navýšením o {fmtPct(calc.dynamization)}</> : null}.</>}
+            </>
+          ) : (
+            <>Cieľ {fmtEUR(calc.target)} mesačne je pokrytý{calc.gap < -0.5 ? <> s rezervou <strong>{fmtEUR(-calc.gap)} mesačne</strong></> : null}. Súčasné nastavenie stačí — stačí v ňom vytrvať.</>
+          )}
+        </div>
+      </div>
+
+      <div className="pdf-avoid-break" style={{ breakInside: "avoid", marginBottom: "18px" }}>
+        <h2 style={{ fontSize: "14px", fontWeight: 800, margin: "0 0 8px", color: "#10231f" }}>Ako sme počítali</h2>
+        <ul style={{ margin: 0, paddingLeft: "16px", fontSize: "11px", lineHeight: 1.55, color: "#4b5b57", listStyle: "disc" }}>
+          <li>{pensionExplain({
+            mode: calc.pensionMode === "manual" ? "manual" : "estimate", state: calc.statePension, p2: calc.p2Renta, wage: calc.wage, avgWage: calc.avgWage,
+            pomb: calc.pomb, adh: calc.adh, years: calc.totalYears, effYears: Math.max(0, calc.totalYears - calc.reducedYears), p2Enabled: calc.p2Enabled,
+          })} Osobný mzdový bod je obmedzený na 3, roky poistenia = odpracované ({calc.yearsWorked}) + do dôchodku ({calc.yearsToRet}).</li>
+          {calc.p2Enabled && <li>2. pilier: zostatok {fmtEUR(calc.p2Balance)} + {fmtPct(calc.p2Rate)} z hrubej mzdy ({fmtEUR(calc.p2Monthly)} mesačne, rastie s infláciou), výnos {fmtPct(calc.p2Return)} ročne; pri odchode sa premení na mesačnú rentu {calc.perpetual ? "" : `do ${calc.endAge} rokov`}. Za roky v 2. pilieri sa štátny dôchodok primerane kráti.</li>}
+          {calc.p3Enabled && <li>3. pilier: zostatok {fmtEUR(calc.p3Balance)} + {fmtEUR(calc.p3Client + calc.p3Employer)} mesačne, výnos {fmtPct(calc.p3Return)} ročne → renta {fmtEUR(calc.p3Renta)} mesačne.</li>}
+          {calc.investEnabled && <li>Investície: úspory {fmtEUR(calc.savings)} + {fmtEUR(calc.monthly)} mesačne (každý rok +{fmtPct(calc.dynamization)}), výnos {fmtPct(calc.returnAcc)} − náklady {fmtPct(calc.costs)} ročne → kapitál {fmtEUR(calc.capitalReal)} v dnešných cenách → renta {fmtEUR(calc.renta)} mesačne {calc.perpetual ? "len z výnosov" : `do ${calc.endAge} rokov`} (výnos počas výplaty {fmtPct(calc.returnPay)}).</li>}
+          <li>Všetky sumy sú očistené o infláciu {fmtPct(calc.inflation)} ročne (v dnešných cenách); renta sa každý rok zvyšuje o infláciu.</li>
+        </ul>
       </div>
 
       {calc.investEnabled && calc.capitalNom > 0 && (
@@ -1180,8 +1610,9 @@ const DEFAULTS = {
 const PLAN = window.PlanStore && window.PlanStore.isPlanMode() ? window.PlanStore : null;
 if (PLAN) PLAN.mountBar("Renta", "retirement");
 
-function summarizeRetirement(c) {
+function summarizeRetirement(c, motivation) {
   return {
+    motivation, // úvod pre klienta (ponožka vs. pripravený, predčasný dôchodok) — ide aj do PDF plánu
     age: c.age, retAge: c.retAge, endAge: c.endAge, target: c.target,
     statePension: c.statePension, p2Renta: c.p2Renta, p3Renta: c.p3Renta, renta: c.renta,
     basePension: c.basePension, totalIncome: c.totalIncome, gap: c.gap, requiredMonthly: c.requiredMonthly,
@@ -1202,11 +1633,24 @@ function App() {
 
   const calc = useMemo(() => computeRetirement(v), [v]);
 
+  // Úvod pre klienta: dnešný čistý príjem (z profilu v pláne, inak odhad z hrubej mzdy).
+  const currentNet = useMemo(() => {
+    const ps = window.PlanStore;
+    if (PLAN) { const s = PLAN.load(); if (s.finances.netManual) return PLAN.clientNet(s); }
+    return ps ? ps.netFromGross(v.wage) : Math.round(v.wage * 0.75);
+  }, [v.wage]);
+  const motivation = useMemo(() => computeMotivation(calc, currentNet), [calc, currentNet]);
+  const readPref = (key, dflt) => { try { const x = localStorage.getItem(key); return x == null ? dflt : x === "1"; } catch (e) { return dflt; } };
+  const [showIntro, setShowIntroState] = useState(() => readPref("dochodkova:intro", true));
+  const [introInPdf, setIntroInPdfState] = useState(() => readPref("dochodkova:intro-pdf", true));
+  const setShowIntro = (on) => { setShowIntroState(on); try { localStorage.setItem("dochodkova:intro", on ? "1" : "0"); } catch (e) {} };
+  const setIntroInPdf = (on) => { setIntroInPdfState(on); try { localStorage.setItem("dochodkova:intro-pdf", on ? "1" : "0"); } catch (e) {} };
+
   useEffect(() => {
     if (!PLAN) return;
-    const t = setTimeout(() => PLAN.saveModule("retirement", v, summarizeRetirement(calc)), 300);
+    const t = setTimeout(() => PLAN.saveModule("retirement", v, summarizeRetirement(calc, motivation)), 300);
     return () => clearTimeout(t);
-  }, [calc]);
+  }, [calc, motivation]);
 
   const cssColor = (varName) => getComputedStyle(document.documentElement).getPropertyValue(varName).trim() || "#999";
   const colors = { principal: cssColor("--slot-principal"), cost: cssColor("--slot-cost"), profit: cssColor("--slot-profit"), pillar2: cssColor("--slot-pillar2"), pillar3: cssColor("--slot-pillar3") };
@@ -1216,6 +1660,7 @@ function App() {
   useEffect(() => {
     if (!exporting) return;
     let cancelled = false;
+    const scrollBack = window.scrollY;
     (async () => {
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       if (cancelled) return;
@@ -1230,10 +1675,13 @@ function App() {
           .normalize("NFD").replace(/[̀-ͯ]/g, "")
           .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
         const filename = `dochodkova-kalkulacka-${nameSlug ? nameSlug + "-" : ""}${dateSlug}.pdf`;
+        // html2canvas kreslí s posunom podľa aktuálneho scrollu — pri posunutej stránke
+        // by vyšli prázdne strany. Preto export vždy od vrchu stránky.
+        window.scrollTo(0, 0);
         const blob = await window.html2pdf().set({
           margin: [10, 10, 14, 10],
           image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, backgroundColor: "#ffffff", useCORS: true },
+          html2canvas: { scale: 2, backgroundColor: "#ffffff", useCORS: true, scrollX: 0, scrollY: 0 },
           jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
           pagebreak: { mode: ["css", "legacy"], avoid: [".pdf-avoid-break"] },
         }).from(el).outputPdf("blob");
@@ -1255,7 +1703,7 @@ function App() {
           URL.revokeObjectURL(url);
         }
       } finally {
-        if (!cancelled) setExporting(false);
+        if (!cancelled) { setExporting(false); requestAnimationFrame(() => window.scrollTo(0, scrollBack)); }
       }
     })();
     return () => { cancelled = true; };
@@ -1268,11 +1716,33 @@ function App() {
           <div className="fade-in" style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
             <span className="btn-accent" style={{ cursor: "default" }}>Generujem PDF…</span>
           </div>
-          <PrintDocument printRef={printRef} clientName={clientName.trim()} calc={calc} />
+          <PrintDocument printRef={printRef} clientName={clientName.trim()} calc={calc} motivation={motivation} includeIntro={introInPdf} />
         </div>
       ) : (
         <div className="mx-auto w-full flex flex-col gap-8" style={{ maxWidth: "1024px" }}>
-          <header className="flex flex-col gap-4">
+          {showIntro && (
+            <section className="flex flex-col gap-4 fade-in" aria-label="Úvod pre klienta">
+              <div className="card p-4 flex flex-col gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--accent)" }}>Úvod pre klienta</span>
+                  <button type="button" className="text-xs font-semibold underline" style={{ color: "var(--text-secondary)" }} onClick={() => setShowIntro(false)}>Skryť úvod</button>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <Field label="Vek" unit="rokov" value={v.age} onChange={set("age")} min={18} max={70} step={1} />
+                  <Field label="Hrubá mzda" unit="EUR / mes." value={v.wage} onChange={set("wage")} min={0} max={8000} step={50}
+                    hint={`čistá cca ${fmtEUR(currentNet)}`} />
+                  <Field label="Dôchodkový vek" unit="rokov" value={v.retAge} onChange={set("retAge")} min={55} max={75} step={1} />
+                  <Field label="Chcem mať na dôchodku" unit="EUR / mes." value={v.target} onChange={set("target")} min={0} max={6000} step={50}
+                    hint={<button type="button" className="underline" style={{ color: "var(--accent)" }} onClick={() => set("target")(currentNet)}>= dnešný čistý príjem</button>} />
+                </div>
+              </div>
+              <MotivationPages m={motivation} />
+              <div className="flex justify-center">
+                <a href="#kalkulacia" className="btn-accent" style={{ fontSize: "1rem", padding: "0.8rem 1.6rem", textDecoration: "none", whiteSpace: "normal", textAlign: "center" }}>Poďme to prepočítať presne ↓</a>
+              </div>
+            </section>
+          )}
+          <header id="kalkulacia" className="flex flex-col gap-4" style={{ scrollMarginTop: "16px" }}>
             <div className="flex flex-col gap-2">
               <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--accent)" }}>Kalkulačka</span>
               <h1 className="text-3xl md:text-4xl font-extrabold" style={{ color: "var(--text-primary)", textWrap: "balance" }}>
@@ -1295,9 +1765,20 @@ function App() {
                   onChange={(e) => setClientName(e.target.value)}
                 />
               </div>
-              <button className="btn-accent" onClick={() => setExporting(true)} disabled={exporting}>
-                Exportovať do PDF
-              </button>
+              <div className="flex flex-wrap items-center gap-4">
+                {!showIntro && (
+                  <button type="button" className="text-sm font-semibold underline" style={{ color: "var(--accent)" }} onClick={() => { setShowIntro(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+                    Zobraziť úvod pre klienta
+                  </button>
+                )}
+                <label className="flex items-center gap-2 text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>
+                  <input type="checkbox" checked={introInPdf} onChange={(e) => setIntroInPdf(e.target.checked)} />
+                  Úvod pre klienta v PDF
+                </label>
+                <button className="btn-accent" onClick={() => setExporting(true)} disabled={exporting}>
+                  Exportovať do PDF
+                </button>
+              </div>
             </div>
           </header>
 

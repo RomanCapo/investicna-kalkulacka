@@ -14,6 +14,9 @@ Jednoduchá single-page kalkulačka (React cez CDN + Tailwind CSS, žiadny build
 
 `dochodkova-kalkulacka.html` — odhad štátneho dôchodku a renty z investícií v rovnakom dizajne.
 
+- Úvod pre klienta (dá sa skryť): „Váš dôchodok bude o X rokov iba …“ s vysvetlením, ako vznikol štátny dôchodok, koľko treba mať na účte, **Ponožka vs. Pripravený** (mesačne a celkovo) a **predčasný dôchodok** v 55 / 60 / 62 rokoch — čísla sú tie isté ako v detaile kalkulačky („Pripravený“ = potrebná mesačná investícia, rozdiel oproti tomu, čo klient investuje dnes); v PDF z kalkulačky aj vo finančnom pláne tvorí prvé dve strany kapitoly Renta
+- PDF obsahuje aj časť „Ako sme počítali“ (vzorec štátneho dôchodku, piliere, investície, inflácia)
+
 - Odhad štátneho dôchodku (1. pilier) zo mzdy, odpracovaných rokov, priemernej mzdy a ADH, alebo ručné zadanie sumy
 - 2. pilier: zostatok, príspevok z hrubej mzdy, výnos; krátenie štátneho dôchodku za roky sporenia a čistý prínos 2. piliera
 - 3. pilier (DDS): zostatok, príspevok klienta aj zamestnávateľa, ročné navýšenie, výnos; daňová úľava a renta z 3. piliera

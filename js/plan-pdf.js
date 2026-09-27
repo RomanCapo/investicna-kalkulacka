@@ -854,6 +854,246 @@
   // ---------------------------------------------------------------------------
   // Retirement
   // ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
+  // Úvod pre klienta v kapitole Renta (rovnaký obsah ako v dôchodkovej kalkulačke):
+  // strana 1 „ponožka vs. pripravený“, strana 2 predčasný dôchodok. Farby berie
+  // z brandingu plánu; červená len pre to, čo chýba.
+  // ---------------------------------------------------------------------------
+  const MOT_DANGER = "#c23b32";
+  const MOT_DANGER_SOFT = "#f8e8e6";
+  const MOT_TINT = "#f5f7f5";
+  const rokov = (n) => (n === 1 ? "rok" : n >= 2 && n <= 4 ? "roky" : "rokov");
+
+  const MOT_WORK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200">
+    <rect width="320" height="200" fill="#eef2f0"/>
+    ${[40, 78, 116].map((y) => `<rect x="18" y="${y}" width="150" height="6" rx="3" fill="#cfd9d5"/>`).join("")}
+    ${[22, 52, 84, 118, 142].map((x, i) => `<rect x="${x}" y="${18 + (i % 2) * 4}" width="20" height="22" rx="3" fill="${["#d08a16", "#9fb8b0", "#c23b32", "#0f6b5c", "#9fb8b0"][i]}" opacity="0.75"/>`).join("")}
+    ${[26, 60, 96, 130].map((x, i) => `<rect x="${x}" y="${56 + (i % 2) * 3}" width="24" height="22" rx="3" fill="${["#9fb8b0", "#d08a16", "#9fb8b0", "#c23b32"][i]}" opacity="0.65"/>`).join("")}
+    ${[24, 58, 92, 126].map((x, i) => `<rect x="${x}" y="${94 + (i % 2) * 3}" width="26" height="20" rx="3" fill="${["#0f6b5c", "#9fb8b0", "#d08a16", "#9fb8b0"][i]}" opacity="0.65"/>`).join("")}
+    <rect x="0" y="146" width="320" height="54" fill="#10231f"/>
+    <rect x="176" y="112" width="92" height="40" rx="6" fill="#2b4a43"/>
+    <rect x="188" y="120" width="44" height="14" rx="3" fill="#bfe3d6"/>
+    <circle cx="252" cy="127" r="6" fill="#d08a16"/>
+    <circle cx="268" cy="54" r="30" fill="#ffffff" stroke="#10231f" stroke-width="5"/>
+    <line x1="268" y1="54" x2="268" y2="34" stroke="#10231f" stroke-width="5" stroke-linecap="round"/>
+    <line x1="268" y1="54" x2="283" y2="62" stroke="#c23b32" stroke-width="5" stroke-linecap="round"/>
+    <text x="160" y="182" text-anchor="middle" font-family="Roboto" font-size="15" font-weight="bold" fill="#ffffff">zmena 6:00 – 14:00</text>
+  </svg>`;
+  const MOT_HOLIDAY_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200">
+    <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d5eeea"/><stop offset="1" stop-color="#fbf4e4"/></linearGradient></defs>
+    <rect width="320" height="200" fill="url(#sky)"/>
+    <circle cx="252" cy="52" r="26" fill="#e3a33b"/>
+    <path d="M0 132 Q40 122 80 132 T160 132 T240 132 T320 132 V200 H0Z" fill="#5cb8aa"/>
+    <path d="M0 150 Q40 140 80 150 T160 150 T240 150 T320 150 V200 H0Z" fill="#2f9486"/>
+    <rect x="0" y="168" width="320" height="32" fill="#efe1c2"/>
+    <path d="M70 170 C74 130 70 104 80 78" stroke="#8a5a2b" stroke-width="8" fill="none" stroke-linecap="round"/>
+    ${[[-60, "#0f6b5c"], [-20, "#1baf7a"], [20, "#0f6b5c"], [60, "#1baf7a"], [150, "#0c5a4d"]].map(([a, c]) => `<ellipse cx="80" cy="78" rx="34" ry="9" fill="${c}" transform="rotate(${a} 80 78) translate(24 0)"/>`).join("")}
+    <rect x="170" y="158" width="58" height="8" rx="4" fill="#ffffff" transform="rotate(-14 199 162)"/>
+    <rect x="236" y="160" width="58" height="8" rx="4" fill="#ffffff" transform="rotate(-14 265 164)"/>
+    <rect x="218" y="122" width="6" height="44" fill="#c23b32"/>
+    <path d="M186 124 Q221 96 256 124 Z" fill="#c23b32"/>
+    <path d="M204 124 Q221 106 238 124 Z" fill="#ffffff" opacity="0.6"/>
+  </svg>`;
+
+  // Ako vznikol štátny dôchodok — rovnaká veta ako v kalkulačke.
+  function pensionExplain(p) {
+    const n = (x, d) => new Intl.NumberFormat("sk-SK", { maximumFractionDigits: d }).format(x);
+    const state = p.mode === "manual"
+      ? `Štátny dôchodok ${eur(p.state)} je zadaný ručne (napr. z listu Sociálnej poisťovne).`
+      : `Štátny dôchodok ${eur(p.state)} = osobný mzdový bod ${n(p.pomb, 3)} (mzda ${eur(p.wage)} ÷ priemerná mzda ${eur(p.avgWage)}) × ` +
+        `${n(p.effYears, 1)} rokov poistenia${p.p2Enabled ? " (po krátení za 2. pilier)" : ""} × ADH ${n(p.adh, 2)} €.`;
+    return p.p2Enabled && p.p2 > 0.5 ? `${state} K tomu renta z 2. piliera ${eur(p.p2)}.` : state;
+  }
+
+  // Rámček s jednou bunkou (pdfmake nemá zaoblené rohy ani prechody).
+  const box = (content, fill, border, margin) => ({
+    table: { widths: ["*"], body: [[Object.assign({ fillColor: fill, margin: [9, 6, 9, 7] }, content)]] },
+    layout: { hLineWidth: () => (border ? 0.8 : 0), vLineWidth: () => (border ? 0.8 : 0), hLineColor: () => border, vLineColor: () => border },
+    margin: margin || [0, 0, 0, 0],
+  });
+
+  const centered = (node, width) => ({ columns: [{ width: "*", text: "" }, Object.assign({ width }, node), { width: "*", text: "" }] });
+
+  function motTop(ctx, title, subtitle, compact) {
+    return {
+      stack: nn([
+        compact ? null : { text: "ÚVOD PRE KLIENTA", fontSize: 8, bold: true, characterSpacing: 1.2, color: ctx.brand.primary },
+        { text: title, fontSize: compact ? 17 : 20, bold: true, color: ctx.brand.ink, margin: [0, compact ? 0 : 3, 0, 0] },
+        subtitle ? Object.assign({ italics: true, fontSize: 10.5, color: ctx.brand.inkSecondary, lineHeight: 1.3, margin: [0, 3, 0, 0] }, subtitle) : null,
+      ]),
+      margin: [0, 0, 0, compact ? 7 : 10],
+    };
+  }
+
+  const pill = (text, fill) => centered({
+    table: { body: [[{ text, color: "#ffffff", bold: true, fontSize: 15, fillColor: fill, margin: [14, 4, 14, 5], alignment: "center" }]] },
+    layout: "noBorders",
+  }, "auto");
+
+  function motDivider(ctx) {
+    const mid = CONTENT_W / 2;
+    const dot = (x) => ({ type: "ellipse", x, y: 4, r1: 2.2, r2: 2.2, color: ctx.brand.primary });
+    return {
+      canvas: [
+        { type: "line", x1: mid - 140, y1: 4, x2: mid - 20, y2: 4, lineWidth: 0.6, lineColor: ctx.brand.hairline },
+        dot(mid - 10), dot(mid), dot(mid + 10),
+        { type: "line", x1: mid + 20, y1: 4, x2: mid + 140, y2: 4, lineWidth: 0.6, lineColor: ctx.brand.hairline },
+      ],
+      margin: [0, 6, 0, 6],
+    };
+  }
+
+  function duelCard(ctx, title, sub, monthly, monthlyNote, total, accent, soft) {
+    return {
+      table: {
+        widths: ["*"],
+        body: [
+          [{ fillColor: soft, margin: [6, 5, 6, 5], stack: [
+            { text: title, bold: true, fontSize: 15, color: accent, alignment: "center" },
+            { text: sub, italics: true, fontSize: 8.5, color: ctx.brand.inkSecondary, alignment: "center", margin: [0, 2, 0, 0] },
+          ] }],
+          [{ margin: [6, 5, 6, 6], stack: [
+            { text: eur(monthly), bold: true, fontSize: 17, color: ctx.brand.ink, alignment: "center" },
+            { text: monthlyNote, bold: true, fontSize: 8, color: ctx.brand.muted, alignment: "center" },
+            { text: "Celkovo odložím", fontSize: 8.5, color: ctx.brand.inkSecondary, alignment: "center", margin: [0, 3, 0, 0] },
+            { text: eur(total), bold: true, fontSize: 11.5, color: ctx.brand.ink, alignment: "center" },
+          ] }],
+        ],
+      },
+      layout: { hLineWidth: (i) => (i === 1 ? 0 : 1.2), vLineWidth: () => 1.2, hLineColor: () => accent, vLineColor: () => accent },
+    };
+  }
+
+  function retirementIntro(ctx, m) {
+    const P = ctx.brand.primary, SOFT = ctx.brand.primarySoft, INK = ctx.brand.ink;
+    const hasGap = m.capNeedReal > 0.5 && isFinite(m.capNeedReal);
+    const saveMonthly = (m.sockMonthly || 0) - (m.fundMonthly || 0);
+    const saveTotal = (m.sockTotal || 0) - (m.fundTotal || 0);
+    const max = Math.max(m.currentNet || 0, m.statePillars || 0, m.target || 0, 1);
+    const barW = 240;
+    const barRow = (label, value, color) => [
+      { text: label, fontSize: 8.5, bold: true, color: ctx.brand.inkSecondary, margin: [0, 1, 0, 0] },
+      { canvas: [{ type: "rect", x: 0, y: 2, w: Math.max(6, (value / max) * barW), h: 8, r: 4, color }] },
+      { text: eur(value), fontSize: 9.5, bold: true, color: INK, alignment: "right" },
+    ];
+    const chip = (label, value) => ({
+      stack: [{ text: label.toUpperCase(), fontSize: 7, bold: true, color: ctx.brand.muted, characterSpacing: 0.4 }, { text: value, fontSize: 13, bold: true, color: INK, margin: [0, 1, 0, 0] }],
+      fillColor: MOT_TINT, margin: [10, 4, 10, 5],
+    });
+    const dyn = m.dynamization > 0 ? ` (+${pct(m.dynamization)} ročne)` : "";
+
+    const page1 = nn([
+      motTop(ctx, "Dôchodok", { text: "Dôchodcovia – ich životné krédo? Ich životné heslo?\nŽiť len zo spomienok! Z dôchodku to nešlo…" }, true),
+      {
+        table: { widths: ["*", "*", "*"], body: [[chip("Čistý príjem dnes", eur(m.currentNet)), chip("Vek", `${m.age} ${rokov(m.age)}`), chip("Do dôchodku", `${m.yearsToRet} ${rokov(m.yearsToRet)}`)]] },
+        layout: { hLineWidth: () => 0, vLineWidth: (i) => (i === 0 || i === 3 ? 0 : 8), vLineColor: () => "#ffffff", paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 },
+        margin: [0, 0, 0, 8],
+      },
+      { text: "Buď sa nedožijete dôchodku, alebo budete pracujúci dôchodca až do smrti.", alignment: "center", bold: true, fontSize: 10.5, color: INK },
+      { text: "PREČO?", alignment: "center", bold: true, fontSize: 8, characterSpacing: 1, color: ctx.brand.muted, margin: [0, 3, 0, 1] },
+      { text: [`Pretože váš dôchodok bude o ${m.yearsToRet} ${rokov(m.yearsToRet)} iba `, { text: eur(m.statePillars), color: MOT_DANGER }], alignment: "center", bold: true, fontSize: 16, color: INK },
+      centered({
+        table: { widths: [90, barW, "*"], body: [barRow("Dnes zarábate", m.currentNet, INK), barRow("Dôchodok od štátu", m.statePillars, MOT_DANGER), barRow("Chcete mať", m.target, P)] },
+        layout: { hLineWidth: () => 0, vLineWidth: () => 0, paddingTop: () => 1.5, paddingBottom: () => 1.5, paddingLeft: () => 4, paddingRight: () => 4 },
+        margin: [0, 6, 0, 2],
+      }, 390),
+      m.dropPct != null && m.dropPct > 1
+        ? { text: ["To je o ", { text: `${Math.round(m.dropPct)} %`, color: MOT_DANGER, bold: true }, " menej, než dnes zarábate."], alignment: "center", fontSize: 8.5, bold: true, color: ctx.brand.inkSecondary }
+        : null,
+      m.pension ? box({ text: [{ text: "Ako sme to počítali: ", bold: true, color: INK }, pensionExplain(m.pension), " Sumy sú v dnešných cenách."], fontSize: 8, color: ctx.brand.inkSecondary, lineHeight: 1.25 }, MOT_TINT, ctx.brand.hairline, [0, 6, 0, 0]) : null,
+    ]);
+
+    if (hasGap) {
+      let status = null;
+      if (m.currentMonthly > 0.5) {
+        status = m.missing > 0.5
+          ? { warn: true, text: [`Dnes už investujete `, { text: eur(m.currentMonthly), bold: true }, ` mesačne — renta z toho bude ${eur(m.ownRenta)}. Do cieľa ešte chýba ${eur(m.missing)} mesačne, preto treba pridať `, { text: `${eur(m.extraMonthly)} mesačne`, bold: true }, "."] }
+          : { warn: false, text: [`Dnes už investujete `, { text: eur(m.currentMonthly), bold: true }, ` mesačne — to na cieľ stačí. Spolu budete mať ${eur(m.totalIncome)} mesačne.`] };
+      } else if (m.currentMonthly != null) {
+        status = { warn: true, text: `Zatiaľ si na dôchodok pravidelne neodkladáte — celý rozdiel ${eur(m.missing)} mesačne treba vytvoriť.` };
+      }
+      page1.push(
+        { stack: [pill("Ako to zmeniť?", P)], margin: [0, 6, 0, 4] },
+        { text: [
+          "Pri odchode do dôchodku potrebujete mať na účte ",
+          { text: ` ${eur(m.capNeedReal)} `, bold: true, fontSize: 13, color: P, background: SOFT },
+          `, aby ste si udržali príjem ${eur(m.target)} mesačne — tento balík peňazí vám bude `,
+          { text: "generovať ďalšie peniaze", color: P },
+          ".",
+        ], alignment: "center", bold: true, fontSize: 10, color: INK, lineHeight: 1.3, margin: [24, 0, 24, 0] },
+        { text: `Suma je v dnešných cenách — o ${m.yearsToRet} ${rokov(m.yearsToRet)} to s infláciou bude ${eur(m.capNeedNom)}.`, alignment: "center", fontSize: 8, color: ctx.brand.muted, margin: [0, 3, 0, 0] },
+        { text: "Ak ich máte, gratulujem — od zajtra môžete byť rentierom a nemusíte už chodiť do práce.", alignment: "center", italics: true, fontSize: 8.5, color: ctx.brand.muted, margin: [0, 2, 0, 1] },
+        { text: "Ak ich nemáte, musíte si ich vytvoriť odkladaním —\nmesačne do ponožky, alebo tým správnym sporením.", alignment: "center", bold: true, fontSize: 10.5, color: INK },
+        {
+          columns: [
+            { width: "*", stack: [duelCard(ctx, "Ponožka", "Už dnes si musíš odkladať", m.sockMonthly, "mesačne", m.sockTotal, MOT_DANGER, MOT_DANGER_SOFT)] },
+            { width: 50, text: "ALEBO", bold: true, fontSize: 8.5, characterSpacing: 1, color: ctx.brand.muted, alignment: "center", margin: [0, 50, 0, 0] },
+            { width: "*", stack: [duelCard(ctx, "Pripravený", "Som s tým v pohode a rozumne sa pripravujem", m.fundMonthly, `mesačne${dyn}`, m.fundTotal, P, SOFT)] },
+          ],
+          columnGap: 6,
+          margin: [30, 5, 30, 4],
+        },
+        saveMonthly > 0.5 ? { text: [
+          "Výhoda byť ", { text: "pripravený", color: P, decoration: "underline" }, " je v tom, že mesačne usporím ",
+          { text: eur(saveMonthly), color: P }, "\na celkovo ", { text: eur(saveTotal), color: P }, " za celé obdobie sporenia.",
+        ], alignment: "center", bold: true, fontSize: 11.5, color: INK, lineHeight: 1.25 } : null,
+        status ? box({ text: status.text, fontSize: 9, color: INK, lineHeight: 1.25 }, status.warn ? MOT_DANGER_SOFT : SOFT, status.warn ? "#e8b9b4" : ctx.brand.hairline, [0, 7, 0, 0]) : null,
+      );
+    } else {
+      page1.push(
+        { stack: [pill("Ste na dobrej ceste", P)], margin: [0, 8, 0, 5] },
+        { text: `Štát a piliere pokryjú cieľový príjem ${eur(m.target)} mesačne. Stačí v tom vytrvať — a možno môžete ísť do dôchodku aj skôr.`, alignment: "center", bold: true, fontSize: 10.5, color: INK, margin: [30, 0, 30, 0] },
+      );
+    }
+
+    const tag = (text, fill) => ({ table: { body: [[{ text, bold: true, fontSize: 8, characterSpacing: 0.6, color: "#ffffff", fillColor: fill, margin: [6, 2, 6, 2] }]] }, layout: "noBorders", margin: [0, 0, 0, 4] });
+    const sceneW = (CONTENT_W - 18) / 2;
+    const earlyCard = (e) => ({
+      fillColor: SOFT, margin: [6, 10, 6, 11], stack: [
+        { text: `v ${e.age} rokoch`, bold: true, fontSize: 14, color: P, alignment: "center" },
+        { text: "už dnes si musím odkladať", fontSize: 8.5, color: ctx.brand.inkSecondary, alignment: "center", margin: [0, 3, 0, 7] },
+        centered({ table: { body: [[{ text: [eur(e.monthly), { text: " / mes.", fontSize: 8 }], bold: true, fontSize: 12, color: "#ffffff", fillColor: P, margin: [10, 3, 10, 4] }]] }, layout: "noBorders" }, "auto"),
+      ],
+    });
+
+    const page2 = nn([
+      motTop(ctx, "Predčasný dôchodok", { text: ["Kedy už ", { text: "nemusím", color: MOT_DANGER, bold: true }, " chodiť do práce, ale ", { text: "chcem", color: P, bold: true }, " pracovať"] }),
+      { text: "Stačí naozaj málo, aby bol aj život na dôchodku plnohodnotný.\nRozhodnutie je na vás, ako chcete tráviť dôchodok.", alignment: "center", italics: true, fontSize: 11.5, color: ctx.brand.inkSecondary, lineHeight: 1.3, margin: [0, 0, 0, 10] },
+      {
+        columns: [
+          { width: sceneW, stack: [tag("V PRÁCI", MOT_DANGER), { svg: MOT_WORK_SVG, width: sceneW }] },
+          { width: sceneW, stack: [tag("NA DOVOLENKE", P), { svg: MOT_HOLIDAY_SVG, width: sceneW }] },
+        ],
+        columnGap: 18,
+      },
+      { text: "Predstavte si odísť do dôchodku skôr, ako diktuje štát.\nUžívať si dôchodok a nechodiť už do práce.", alignment: "center", bold: true, fontSize: 12.5, color: INK, margin: [0, 12, 0, 0] },
+      motDivider(ctx),
+      { text: [
+        "Niekto tento stav nedosiahne ", { text: "nikdy", color: MOT_DANGER, bold: true }, ",\n",
+        "niekto v ", { text: `${m.retAge} rokoch`, bold: true }, ",\n",
+        "a pripravený to ", { text: "dosiahne skôr", color: P, bold: true }, ".",
+      ], alignment: "center", italics: true, fontSize: 14, color: INK, lineHeight: 1.3 },
+      motDivider(ctx),
+      m.early && m.early.length ? { text: "Čo preto musím spraviť?", alignment: "center", bold: true, fontSize: 11, color: INK, margin: [0, 0, 0, 8] } : null,
+      m.early && m.early.length ? {
+        table: { widths: m.early.map(() => "*"), body: [m.early.map(earlyCard)] },
+        layout: { hLineWidth: () => 0, vLineWidth: (i) => (i === 0 || i === m.early.length ? 0 : 10), vLineColor: () => "#ffffff", paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 },
+      } : { text: "Aj pár rokov skôr sa dá — prepočítajme si to spolu.", alignment: "center", bold: true, fontSize: 11, color: INK },
+      { text: "Nikdy nie je neskoro, ani skoro začať.", alignment: "center", bold: true, italics: true, fontSize: 13, color: INK, margin: [0, 12, 0, 8] },
+      { text: `Predčasný dôchodok: do ${m.retAge} rokov sa celý príjem ${eur(m.target)} vypláca z vlastných peňazí, potom už len rozdiel k štátnemu dôchodku. ` +
+          `Suma je prvý mesačný vklad${m.dynamization > 0 ? ", ďalej sa zvyšuje ako pri pravidelnej investícii" : ""}. ` +
+          `Sumy sú v dnešných cenách. Predpoklad: výnos ${pct(m.netReturn)} ročne po nákladoch, inflácia ${pct(m.inflation)}, ${m.perpetual ? "renta len z výnosov" : `renta do ${m.endAge} rokov`}; ponožka = rovnaká suma každý mesiac bez zhodnotenia.`,
+        alignment: "center", fontSize: 7.5, color: ctx.brand.muted, lineHeight: 1.25 },
+    ]);
+
+    // Bez „unbreakable“: pdfmake nedeliteľný blok vyšší ako strana nevykreslí vôbec.
+    return [
+      { stack: page1 },
+      { stack: page2, pageBreak: "before" },
+      { text: "", pageBreak: "after" },
+    ];
+  }
+
   function renderRetirement(ctx, r) {
     const keys = ["statePension", "pillar2", "pillar3", "investments", "rental", "other"];
     const src = keys.map((k, i) => ({ k, label: L.retirementSources[k], value: r.sources[k] || 0, color: SERIES[i] })).filter((x) => x.value > 0);
@@ -872,6 +1112,7 @@
     legendRows.push([td(""), td("Očakávaný príjem spolu", { bold: true }), tdNum(eur(total), { bold: true }), tdNum(pct((total / r.targetMonthlyToday) * 100), { bold: true })]);
 
     return nn([
+      ...(r.motivation ? retirementIntro(ctx, r.motivation) : []),
       tiles([
         tile(ctx, "Odchod do dôchodku", `${r.retirementAge} rokov`, yearsLeft > 0 ? `o ${yearsLeft} rokov` : " "),
         tile(ctx, "Cieľový príjem", eur(r.targetMonthlyToday), "mesačne, v dnešných cenách"),
@@ -897,6 +1138,14 @@
         }]] },
         layout: "noBorders",
       } : null,
+      r.motivation && r.motivation.pension ? block("Ako sme počítali", [{ ul: nn([
+        pensionExplain(r.motivation.pension) + " Osobný mzdový bod je obmedzený na 3; roky poistenia = odpracované + zostávajúce do dôchodku.",
+        r.sources.pillar2 ? "2. pilier: zostatok a príspevky z hrubej mzdy sa zhodnocujú do dôchodku a potom sa vyplácajú ako mesačná renta; za roky v 2. pilieri sa štátny dôchodok primerane kráti." : null,
+        r.sources.pillar3 ? "3. pilier: zostatok a príspevky klienta aj zamestnávateľa sa zhodnocujú do dôchodku a potom sa vyplácajú ako renta." : null,
+        r.sources.investments ? "Vlastné investície: súčasné úspory a pravidelný vklad (každý rok navýšený) sa zhodnocujú pri očakávanom výnose po nákladoch; nasporený kapitál sa vypláca ako renta" +
+          (r.payoutEndAge ? ` do ${r.payoutEndAge} rokov.` : ".") : null,
+        "Všetky sumy sú očistené o infláciu (v dnešných cenách); renta sa každý rok zvyšuje o infláciu.",
+      ]), style: "small" }]) : null,
     ]);
   }
 
@@ -988,7 +1237,9 @@
     let num = 2;
     SECTIONS.forEach((s) => {
       if (!active.includes(s.key)) return;
-      content.push(...h1(ctx, num++, L.modules[s.key], null, breaks));
+      // Renta s úvodom pre klienta začína vždy na novej strane (úvod zaberá celú stranu).
+      const mode = s.key === "retirement" && data.retirement && data.retirement.motivation && breaks !== "never" ? "always" : breaks;
+      content.push(...h1(ctx, num++, L.modules[s.key], null, mode));
       content.push(...s.render(ctx, data[s.key]));
     });
     content.push(...renderClosing(ctx, num, breaks));

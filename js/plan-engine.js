@@ -286,6 +286,7 @@
         targetMonthlyToday: round(ret.target),
         sources: { statePension: round(ret.statePension), pillar2: round(ret.p2Renta), pillar3: round(ret.p3Renta), investments: round(ret.renta) },
         requiredExtraMonthlyInvestment: retirementExtraFull > 0 ? round(retirementExtraFull) : undefined,
+        motivation: ret.motivation || undefined, // úvod pre klienta z dôchodkovej kalkulačky
         note: coveredByNewInvestment > 0
           ? (retirementExtra > 0.5
             ? `Navrhovaná investícia${inv.offerName ? ` „${inv.offerName}“` : ""} z toho pokryje ${eur(coveredByNewInvestment)}, zvyšok ${eur(retirementExtra)} mesačne treba doplniť.`
