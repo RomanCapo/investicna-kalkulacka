@@ -21,7 +21,7 @@
   const UNIT = { "€": "lump_sum", "€ / mes.": "monthly", "€ / deň": "daily" };
   const GOAL_ORDER = ["housing", "retirement", "investments", "children", "security", "incomeScaling"];
   const GOAL_TITLES = { housing: "Bývanie a reality", retirement: "Renta", investments: "Sporenie a investície", children: "Sporenie pre deti", security: "Zabezpečenie", incomeScaling: "Navýšenie príjmu" };
-  const HAS_CALCULATOR = { housing: true, retirement: true, investments: true, security: true, children: true };
+  const HAS_CALCULATOR = { incomeScaling: true, housing: true, retirement: true, investments: true, security: true, children: true };
   const LOAN_KIND = { mortgage: "Hypotéka", consumer: "Spotrebný úver", car: "Úver na auto / leasing", other: "Úver" };
 
   // Počet dní do najbližšieho výročia zmluvy (podľa dátumu začiatku) od dátumu plánu.
@@ -60,6 +60,7 @@
     const sec = pick("security");
     const kids = pick("children"); // len pri deťoch v domácnosti (isGoalSelected)
     const house = pick("housing");
+    const inc = pick("incomeScaling");
     const retAll = raw("retirement"); // dôchodkové účty patria do majetku aj bez cieľa Renta
 
     // ---------------------------------------------------------------- Cashflow
@@ -204,8 +205,16 @@
           detail: `Priebežné náklady ${String(inv.costPct).replace(".", ",")} % ročne znížia výnos o ${eur(inv.costs)} za celú dobu.` });
       }
     }
+    if (inc && inc.yearly > 0) {
+      const mix = (inc.rows || []).filter((r) => r.count > 0).map((r) => `${r.count}× ${r.label.toLowerCase().replace("pzp", "PZP")}`).join(", ");
+      actions.push({ priority: "low", module: "incomeScaling",
+        title: `Zapojiť sa do tipérskeho programu — odhad ${eur(inc.yearly)} ročne`,
+        detail: `${mix ? `Tipy: ${mix}. ` : ""}Úroveň ${inc.tier.label}${inc.tier.bonus ? ` (+${inc.tier.bonus} % k odmenám)` : ""}, v priemere ${eur(inc.monthly)} mesačne. ` +
+          `Odmeny investované ${inc.years} rokov môžu narásť na ${eur(inc.fv)}.`,
+        monthlyImpact: round(inc.monthly) });
+    }
     if (house) {
-      const dur = (months) => { const y = Math.round((months / 12) * 10) / 10; return Number.isInteger(y) ? `${y} ${y === 1 ? "rok" : y < 5 ? "roky" : "rokov"}` : `${String(y).replace(".", ",")} roka`; };
+      const dur =(months) => { const y = Math.round((months / 12) * 10) / 10; return Number.isInteger(y) ? `${y} ${y === 1 ? "rok" : y < 5 ? "roky" : "rokov"}` : `${String(y).replace(".", ",")} roka`; };
       if (house.mode === "new") {
         actions.push({ priority: house.nbs && !house.nbs.ok ? "high" : "medium", module: "housing",
           title: house.nbs && !house.nbs.ok ? "Hypotéka je nad odhadovaným limitom NBS" : `Financovať kúpu hypotékou ${eur(house.loan)}`,
@@ -261,7 +270,7 @@
     });
 
     // ---------------------------------------------------------------- Stav modulov
-    const status = { investments: !!inv, retirement: !!ret, security: !!sec, children: !!kids, housing: !!house, incomeScaling: false };
+    const status = { investments: !!inv, retirement: !!ret, security: !!sec, children: !!kids, housing: !!house, incomeScaling: !!inc };
     const clientGoals = GOAL_ORDER.filter(selected).map((k) => ({
       key: k,
       title: GOAL_TITLES[k],
@@ -329,6 +338,7 @@
           };
         }) : [],
       },
+      incomeScaling: inc ? { currentNetMonthly: round(store.clientNet(s)), referral: inc } : undefined,
       children: kids ? {
         strategyLabel: kids.strategyLabel, inflationPct: kids.inflation,
         kids: (kids.kids || []).map((k) => ({ ...k })),

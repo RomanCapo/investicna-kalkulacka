@@ -450,8 +450,15 @@
         <p class="goal-desc">Ako zvýšiť príjmy a lepšie s nimi narábať.</p>
         <div class="goal-select" data-goal="incomeScaling" data-placeholder="napr. zvýšiť príjem o 500 € mesačne do dvoch rokov"></div>
         <div class="goal-calcs">
-          <div class="calc soon">
-            <div class="calc-head"><span class="calc-name">Plán rastu príjmu</span><span class="chip soon">Pripravujeme</span></div>
+          <div class="calc" data-calc="incomeScaling">
+            <div class="calc-head"><span class="calc-name">Tipérsky program</span><span class="chip todo" data-status>Nevyplnené</span></div>
+            <p class="calc-desc">Odmeny za odporúčania (poistenie, hypotéka, predaj nehnuteľnosti, investície), bonus za pravidelné tipovanie a čo z odmien vyrastie.</p>
+            <div class="metrics" data-metrics hidden></div>
+            <div data-extra></div>
+            <div class="actions">
+              <a class="goal-link" data-open href="prijmova-kalkulacka.html?plan=1">Otvoriť →</a>
+              <button type="button" class="btn-ghost" data-clear="incomeScaling" hidden>Odstrániť z plánu</button>
+            </div>
           </div>
         </div>
       </article>
@@ -840,6 +847,12 @@
           [gap > 0 ? "Chýba" : "Rezerva", `${eur(Math.abs(gap))} / mes.`],
         ];
       } },
+    { key: "incomeScaling", title: "Tipérsky program",
+      metrics: (m) => [
+        ["Tipov ročne", `${m.tips} · ${esc(m.tier.label)}`],
+        ["Odmena", `${eur(m.yearly)} / rok`],
+        ["Mesačne", `${eur(m.monthly)}`],
+      ] },
     { key: "housing", title: "Hypotekárna kalkulačka",
       metrics: (m) => {
         const sc = m.planChoice === "invest" ? m.invest : m.prepay;
@@ -903,7 +916,7 @@
   });
 
   function renderChecklist(s) {
-    const withCalc = { housing: true, retirement: true, investments: true, security: true, children: true };
+    const withCalc = { incomeScaling: true, housing: true, retirement: true, investments: true, security: true, children: true };
     const goals = PS.GOAL_KEYS.filter((k) => PS.isGoalSelected(s, k));
     const items = [["Parametre klienta (meno a príjem)", PS.hasProfile(s), "doplňte v kroku 1"]];
     if (!goals.length) items.push(["Ciele klienta", false, "pridajte aspoň jeden cieľ v kroku 3"]);

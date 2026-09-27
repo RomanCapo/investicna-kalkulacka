@@ -220,6 +220,11 @@
   }
 
   const SHARED = {
+    // Navýšenie príjmu: čistý príjem klienta na porovnanie s odmenami za tipy.
+    incomeScaling: {
+      toCalc: (s) => pick({ net: clientNet(s) }, ["net"]),
+      fromCalc: () => {},
+    },
     // Hypotéka: prvá hypotéka z profilu (zostatok, úrok, splátka), príjem domácnosti, členovia a ostatné úvery.
     // Úvery sa spravujú v profile, späť sa nezapisujú.
     housing: {
@@ -304,6 +309,7 @@
   };
 
   const SHARED_LABELS = {
+    incomeScaling: "čistý príjem",
     housing: "vek, príjem domácnosti, rodina, hypotéka a ostatné úvery",
     children: "deti (meno a vek)",
     retirement: "vek, dôchodkový vek, hrubá mzda, odpracované roky, inflácia",

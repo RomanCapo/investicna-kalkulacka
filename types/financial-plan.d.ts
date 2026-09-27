@@ -321,8 +321,19 @@ export interface RetirementMotivation {
 }
 
 // ---------------------------------------------------------------- Income scaling
+export interface ReferralSummary {
+  tips: number; yearly: number; monthly: number; base: number;   // tips per year, reward incl. tier bonus, base without bonus
+  tier: { label: string; bonus: number }; raisePct: number | null; net: number;
+  rows: { key: string; label: string; basis: number; rate: number; reward: number; count: number; total: number }[];
+  tiers: { label: string; from: number; to: number | null; bonus: number }[];
+  years: number; invPct: number; fv: number; invested: number;   // rewards reinvested
+  series: { year: number; invested: number; value: number }[];
+  motivation?: Record<string, unknown>;                         // client-facing intro pages
+}
+
 export interface IncomeScalingSection {
   currentNetMonthly: number;
+  referral?: ReferralSummary;      // tipérsky program z prijmova-kalkulacka.html (summarizeIncome)
   steps?: {
     label: string;
     person?: string;

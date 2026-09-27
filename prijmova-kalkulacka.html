@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="sk">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Navýšenie príjmu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  :root {
+    --bg: #f5f7f5;
+    --surface: #ffffff;
+    --text-primary: #10231f;
+    --text-secondary: #4b5b57;
+    --text-muted: #7c8b86;
+    --accent: #0f6b5c;
+    --accent-soft: #e3f1ec;
+    --border: rgba(16,35,31,0.10);
+    --border-strong: rgba(16,35,31,0.16);
+    --danger: #c23b32;
+    --danger-soft: rgba(194,59,50,0.10);
+    --warn: #b7791f;
+    --warn-soft: rgba(208,138,22,0.12);
+
+    --slot-state: #2a78d6;
+    --slot-insurance: #1baf7a;
+    --slot-missing: #c23b32;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b1211;
+      --surface: #141c1a;
+      --text-primary: #f5f7f6;
+      --text-secondary: #a9b6b2;
+      --text-muted: #7f8d89;
+      --accent: #35b79f;
+      --accent-soft: rgba(53,183,159,0.16);
+      --border: rgba(255,255,255,0.10);
+      --border-strong: rgba(255,255,255,0.16);
+      --danger: #e2635f;
+      --danger-soft: rgba(226,99,95,0.14);
+      --warn: #e3a33b;
+      --warn-soft: rgba(227,163,59,0.14);
+
+      --slot-state: #3987e5;
+      --slot-insurance: #199e70;
+      --slot-missing: #e2635f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b1211;
+    --surface: #141c1a;
+    --text-primary: #f5f7f6;
+    --text-secondary: #a9b6b2;
+    --text-muted: #7f8d89;
+    --accent: #35b79f;
+    --accent-soft: rgba(53,183,159,0.16);
+    --border: rgba(255,255,255,0.10);
+    --border-strong: rgba(255,255,255,0.16);
+    --danger: #e2635f;
+    --danger-soft: rgba(226,99,95,0.14);
+    --warn: #e3a33b;
+    --warn-soft: rgba(227,163,59,0.14);
+
+    --slot-state: #3987e5;
+    --slot-insurance: #199e70;
+    --slot-missing: #e2635f;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .font-mono-num { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+  }
+  input[type="number"], select {
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    color: var(--text-primary);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  input[type="text"] {
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    color: var(--text-primary);
+  }
+  input[type="text"]:focus,
+  input[type="number"]:focus,
+  select:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+    border-color: var(--accent);
+  }
+  input[type="number"]::-webkit-inner-spin-button { opacity: 0.4; }
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border-strong);
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--surface);
+    box-shadow: 0 0 0 1px var(--border-strong);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--surface);
+    box-shadow: 0 0 0 1px var(--border-strong);
+  }
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent);
+    cursor: pointer;
+    flex: none;
+  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex: none; }
+  .btn-accent {
+    background: var(--accent);
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 0.55rem 1.1rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: opacity .15s ease;
+    white-space: nowrap;
+  }
+  .btn-accent:hover { opacity: 0.9; }
+  .btn-accent:disabled { opacity: 0.55; cursor: default; }
+  .btn-ghost {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 8px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    white-space: nowrap;
+  }
+  .btn-ghost:hover { filter: brightness(0.97); }
+  .info-btn {
+    width: 18px; height: 18px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1.5px solid var(--accent); color: var(--accent);
+    font-size: 11px; font-weight: 800; line-height: 1; font-family: Georgia, serif; font-style: italic;
+    background: transparent; cursor: pointer; flex: none;
+  }
+  .info-btn[aria-expanded="true"] { background: var(--accent); color: var(--surface); }
+  .segmented {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+  }
+  .segmented button {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    padding: 0.45rem 0.6rem;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+  }
+  .segmented button[aria-pressed="true"] {
+    background: var(--surface);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 1px var(--border-strong);
+  }
+  .gap-hatch {
+    background-image: repeating-linear-gradient(45deg, var(--danger) 0 2px, transparent 2px 7px);
+    background-color: var(--danger-soft);
+  }
+  .rider-row + .rider-row { border-top: 1px solid var(--border); }
+  .rider-row.or-joined { border-top: none; }
+  .fade-in { animation: calcFadeIn .32s ease; }
+  @keyframes calcFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .fade-in { animation: none; }
+  }
+  ::selection { background: var(--accent-soft); }
+  /* ─── Motivačný úvod pre klienta (rovnaký na obrazovke aj v PDF) — farby a štýl kalkulačiek ─── */
+  .mot { --m-ink: #10231f; --m-sec: #4b5b57; --m-muted: #7c8b86; --m-line: #e3e8e5; --m-tint: #f5f7f5;
+    --m-accent: #0f6b5c; --m-accent-soft: #e3f1ec; --m-danger: #c23b32; --m-danger-soft: #f8e8e6;
+    background: #ffffff; color: var(--m-ink); border: 1px solid var(--m-line); border-radius: 16px; overflow: hidden;
+    font-family: "Manrope", system-ui, sans-serif; }
+  .mot .num { font-variant-numeric: tabular-nums; }
+  .mot-page { position: relative; padding: 30px 36px 30px; }
+  .mot-page + .mot-page { border-top: 1px solid var(--m-line); }
+  .mot-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 2px solid var(--m-accent); margin-bottom: 18px; }
+  .mot-label { font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--m-accent); }
+  .mot-logo { height: 26px; width: auto; display: block; }
+  .mot-title { font-size: 28px; font-weight: 800; letter-spacing: -0.01em; color: var(--m-ink); line-height: 1.15; }
+  .mot-quote { font-size: 15px; font-style: italic; font-weight: 600; color: var(--m-sec); margin-top: 6px; line-height: 1.5; }
+  .mot-chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 20px 0 18px; }
+  .mot-chip { background: var(--m-tint); border: 1px solid var(--m-line); border-radius: 12px; padding: 10px 14px; }
+  .mot-chip span { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--m-muted); }
+  .mot-chip strong { display: block; font-size: 19px; font-weight: 800; color: var(--m-ink); margin-top: 2px; }
+  .mot-center { text-align: center; }
+  .mot-lead { font-size: 16px; font-weight: 700; color: var(--m-ink); line-height: 1.45; }
+  .mot-why { font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--m-muted); margin: 10px 0 4px; }
+  .mot-big { font-size: 24px; font-weight: 800; color: var(--m-ink); line-height: 1.3; }
+  .mot-big b { color: var(--m-danger); font-weight: 800; white-space: nowrap; }
+  .mot-bars { max-width: 500px; margin: 14px auto 6px; display: grid; gap: 8px; text-align: left; }
+  .mot-bar { display: grid; grid-template-columns: 140px minmax(0, 1fr) 76px; align-items: center; gap: 10px; font-size: 12px; font-weight: 700; color: var(--m-sec); }
+  .mot-bar i { display: block; height: 12px; border-radius: 6px; }
+  .mot-bar strong { text-align: right; color: var(--m-ink); font-size: 13px; font-weight: 800; }
+  .mot-explain { max-width: 640px; margin: 10px auto 0; background: var(--m-tint); border: 1px solid var(--m-line); border-radius: 10px; padding: 8px 12px; font-size: 11.5px; line-height: 1.5; color: var(--m-sec); text-align: left; }
+  .mot-explain b { color: var(--m-ink); }
+  .mot-pill { display: inline-block; background: var(--m-accent); color: #fff; font-weight: 800; font-size: 20px; padding: 8px 22px; border-radius: 12px; margin: 18px 0 12px; }
+  .mot-need { font-size: 15px; font-weight: 700; color: var(--m-ink); line-height: 1.6; max-width: 640px; margin: 0 auto; }
+  .mot-need b { display: inline-block; font-size: 19px; font-weight: 800; color: var(--m-accent); background: var(--m-accent-soft); border-radius: 8px; padding: 0 8px; margin: 0 2px; }
+  .mot-need .gen { color: var(--m-accent); }
+  .mot-small { font-size: 12.5px; font-style: italic; color: var(--m-muted); margin-top: 10px; }
+  .mot-strong { font-size: 16px; font-weight: 800; color: var(--m-ink); margin-top: 6px; line-height: 1.4; }
+  .mot-duel { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 14px; align-items: stretch; margin: 20px auto 16px; max-width: 620px; }
+  .mot-card { border: 2px solid var(--m-line); border-radius: 14px; overflow: hidden; background: #fff; text-align: center; display: flex; flex-direction: column; }
+  .mot-card .hd { padding: 12px 12px 10px; }
+  .mot-card.sock { border-color: var(--m-danger); }
+  .mot-card.sock .hd { background: var(--m-danger-soft); }
+  .mot-card.ready { border-color: var(--m-accent); }
+  .mot-card.ready .hd { background: var(--m-accent-soft); }
+  .mot-card h4 { margin: 0; font-size: 20px; font-weight: 800; }
+  .mot-card.sock h4 { color: var(--m-danger); }
+  .mot-card.ready h4 { color: var(--m-accent); }
+  .mot-card .sub { font-size: 12.5px; font-style: italic; color: var(--m-sec); margin-top: 2px; }
+  .mot-card .body { padding: 12px 12px 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; justify-content: center; }
+  .mot-card .amount { font-size: 26px; font-weight: 800; color: var(--m-ink); line-height: 1.1; }
+  .mot-card .amount small { display: block; font-size: 11px; font-weight: 700; color: var(--m-muted); margin-top: 3px; }
+  .mot-card .total { font-size: 12px; color: var(--m-sec); }
+  .mot-card .total b { display: block; font-size: 15px; font-weight: 800; color: var(--m-ink); }
+  .mot-card .hint { font-size: 10.5px; color: var(--m-muted); }
+  .mot-or { align-self: center; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--m-muted); }
+  .mot-win { font-size: 17px; font-weight: 800; color: var(--m-ink); line-height: 1.5; }
+  .mot-win u { color: var(--m-accent); text-decoration-thickness: 2px; }
+  .mot-win b { color: var(--m-accent); white-space: nowrap; }
+  .mot-status { max-width: 640px; margin: 14px auto 0; border-radius: 12px; padding: 10px 14px; font-size: 13px; font-weight: 600; line-height: 1.5; text-align: left; background: var(--m-accent-soft); color: var(--m-ink); border: 1px solid rgba(15,107,92,0.28); }
+  .mot-status.warn { background: var(--m-danger-soft); border-color: rgba(194,59,50,0.28); }
+  .mot-sub-title { font-size: 15px; font-style: italic; font-weight: 600; color: var(--m-sec); margin-top: 6px; line-height: 1.5; }
+  .mot-sub-title .no { color: var(--m-danger); font-weight: 800; }
+  .mot-sub-title .yes { color: var(--m-accent); font-weight: 800; }
+  .mot-scenes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 18px 0; }
+  .mot-scene { position: relative; border-radius: 14px; border: 1px solid var(--m-line); overflow: hidden; aspect-ratio: 16 / 10; }
+  .mot-scene img { width: 100%; height: 100%; display: block; object-fit: cover; }
+  .mot-tag { position: absolute; top: 10px; left: 10px; background: var(--m-danger); color: #fff; font-weight: 800; font-size: 11.5px; padding: 4px 10px; border-radius: 999px; letter-spacing: .06em; }
+  .mot-tag.good { left: auto; right: 10px; background: var(--m-accent); }
+  .mot-divider { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 14px 0; }
+  .mot-divider::before, .mot-divider::after { content: ""; height: 1px; width: 120px; background: var(--m-line); }
+  .mot-divider span { width: 6px; height: 6px; border-radius: 50%; background: var(--m-accent); }
+  .mot-some { font-size: 20px; font-style: italic; color: var(--m-ink); line-height: 1.5; }
+  .mot-some .no { color: var(--m-danger); font-weight: 800; }
+  .mot-some .yes { color: var(--m-accent); font-weight: 800; }
+  .mot-early { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 14px 0 14px; }
+  .mot-early > div { background: var(--m-accent-soft); border: 1px solid rgba(15,107,92,0.18); border-radius: 14px; padding: 14px 12px; text-align: center; }
+  .mot-early .when { font-size: 18px; font-weight: 800; color: var(--m-accent); }
+  .mot-early .must { font-size: 12.5px; font-weight: 600; color: var(--m-sec); margin: 4px 0 10px; }
+  .mot-early .val { display: inline-block; background: var(--m-accent); color: #fff; font-weight: 800; font-size: 16px; border-radius: 999px; padding: 5px 14px; }
+  .mot-early .val small { font-size: 11px; font-weight: 700; }
+  .mot-end { font-size: 17px; font-weight: 800; font-style: italic; color: var(--m-ink); }
+  .mot-note { font-size: 10.5px; color: var(--m-muted); margin-top: 14px; text-align: center; line-height: 1.5; }
+  @media (max-width: 640px) {
+    .mot-page { padding: 22px 16px 22px; }
+    .mot-logo { height: 20px; }
+    .mot-chips, .mot-early { grid-template-columns: 1fr; }
+    .mot-duel { grid-template-columns: 1fr; }
+    .mot-scenes { grid-template-columns: 1fr; }
+    .mot-bar { grid-template-columns: 96px minmax(0, 1fr) 70px; }
+    .mot-big { font-size: 20px; }
+  }
+  /* V PDF (šírka 714 px) sa úvod zmestí na dve A4 strany. */
+  .mot.print { border: none; border-radius: 0; }
+  /* Horných pár pixelov strany ostáva biele — html2pdf pri delení strán občas „presiakne“ o 1–2 px. */
+  .mot.print .mot-page { padding: 14px 6px 0; }
+  .mot.print .mot-page + .mot-page { border-top: none; }
+  /* PDF má pevnú šírku A4 — vždy stolové rozloženie, aj keď sa exportuje z mobilu. */
+  .mot.print .mot-logo { height: 26px; }
+  .mot.print .mot-chips, .mot.print .mot-early { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mot.print .mot-duel { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+  .mot.print .mot-scenes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mot.print .mot-bar { grid-template-columns: 140px minmax(0, 1fr) 76px; }
+  .mot.print .mot-big { font-size: 21px; }
+  /* Kompaktnejšie medzery, aby každá strana úvodu vyšla presne na jednu A4. */
+  .mot.print .mot-top { margin-bottom: 12px; padding-bottom: 8px; }
+  .mot.print .mot-title { font-size: 24px; }
+  .mot.print .mot-quote { font-size: 13.5px; margin-top: 4px; line-height: 1.4; }
+  .mot.print .mot-chips { margin: 12px 0 12px; }
+  .mot.print .mot-chip { padding: 7px 12px; }
+  .mot.print .mot-chip strong { font-size: 17px; }
+  .mot.print .mot-lead { font-size: 14.5px; }
+  .mot.print .mot-why { margin: 6px 0 2px; }
+  .mot.print .mot-bars { margin: 10px auto 4px; gap: 6px; }
+  .mot.print .mot-explain { font-size: 10.5px; padding: 6px 10px; margin-top: 8px; }
+  .mot.print .mot-pill { font-size: 17px; padding: 6px 18px; margin: 12px 0 8px; }
+  .mot.print .mot-need { font-size: 13.5px; line-height: 1.5; }
+  .mot.print .mot-need b { font-size: 17px; }
+  .mot.print .mot-small { font-size: 11.5px; margin-top: 6px; }
+  .mot.print .mot-strong { font-size: 14.5px; }
+  .mot.print .mot-duel { margin: 12px auto 10px; }
+  .mot.print .mot-card .hd { padding: 8px 10px 7px; }
+  .mot.print .mot-card h4 { font-size: 17px; }
+  .mot.print .mot-card .body { padding: 8px 10px 10px; gap: 5px; }
+  .mot.print .mot-card .amount { font-size: 22px; }
+  .mot.print .mot-win { font-size: 14.5px; line-height: 1.45; }
+  .mot.print .mot-status { font-size: 12px; padding: 8px 12px; margin-top: 10px; }
+  /* Úvod životného poistenia: kladné číslo (čo zarobíte), zoznam krytí s vysvetlením. */
+  .mot-big.good b { color: var(--m-accent); }
+  .mot-story { font-size: 15px; line-height: 1.6; color: var(--m-sec); max-width: 640px; margin: 14px auto 0; text-align: center; }
+  .mot.print .mot-story { font-size: 13px; line-height: 1.5; margin-top: 8px; }
+  .mot-card .total b.danger { color: var(--m-danger); }
+  .mot-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 16px 0 10px; text-align: left; }
+  .mot-group { border: 1px solid var(--m-line); border-radius: 14px; overflow: hidden; }
+  .mot-group .gh { padding: 9px 14px; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+  .mot-group.core .gh { background: var(--m-danger-soft); color: var(--m-danger); }
+  .mot-group.extra .gh { background: var(--m-accent-soft); color: var(--m-accent); }
+  .mot-item { padding: 9px 14px; border-top: 1px solid var(--m-line); }
+  .mot-item .row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .mot-item .name { font-size: 13.5px; font-weight: 800; color: var(--m-ink); }
+  .mot-item .sum { font-size: 13.5px; font-weight: 800; color: var(--m-accent); white-space: nowrap; }
+  .mot-item p { margin: 3px 0 0; font-size: 12px; line-height: 1.45; color: var(--m-sec); }
+  @media (max-width: 640px) { .mot-groups { grid-template-columns: 1fr; } }
+  .mot.print .mot-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 10px 0 6px; }
+  .mot.print .mot-item { padding: 6px 10px; }
+  .mot.print .mot-item .name, .mot.print .mot-item .sum { font-size: 12px; }
+  .mot.print .mot-item p { font-size: 10.5px; line-height: 1.35; }
+</style>
+
+<div id="root"></div>
+
+<script>
+// Pri vložení cez <iframe> (napr. vo WordPresse) posiela stránka rodičovi svoju
+// aktuálnu výšku, aby sa iframe vedel natiahnuť bez vnútorného posúvania.
+if (window.parent !== window) {
+  let lastHeight = 0;
+  const postHeight = () => {
+    const h = Math.ceil(document.body.getBoundingClientRect().height);
+    if (h !== lastHeight) {
+      lastHeight = h;
+      window.parent.postMessage({ type: "prijmova-kalkulacka:height", height: h }, "*");
+    }
+  };
+  new ResizeObserver(postHeight).observe(document.body);
+  setInterval(postHeight, 600); // poistka pre iframe z inej domény
+  window.addEventListener("load", postHeight);
+}
+</script>
+
+<script src="js/plan-store.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<script type="text/babel" data-type="module">
+const { useState, useMemo, useRef, useEffect } = React;
+
+const fmtEUR = (n) => new Intl.NumberFormat("sk-SK", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+const fmtNum = (n, d = 1) => new Intl.NumberFormat("sk-SK", { maximumFractionDigits: d }).format(n);
+const clampNum = (v, lo, hi) => Math.min(hi, Math.max(lo, isFinite(v) ? v : 0));
+const LOGO_DATA_URI = "data:image/png;base64,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";
+const PRINT_COLORS = { invested: "#2a78d6", value: "#1baf7a" };
+
+// ─── Produkty a odmeny ────────────────────────────────────────────────────────
+// Odmena za úspešný tip = základ × sadzba. Predvolené základy podľa trhu (orientačne):
+// medián novej hypotéky ≈ 100 000 € (NBS 2026), byt ≈ 60 m² × 3 430 €/m² (NBS, 2. Q 2026),
+// rizikové životné poistenie ≈ 3–5 % čistého príjmu (≈ 50 € mesačne). Sadzby určuje spoločnosť.
+const PRODUCTS = [
+  { key: "life", label: "Životné poistenie", basisLabel: "Ročné poistné", unit: "€ / rok", basis: 600, rate: 30, count: 2,
+    hint: "rizikové poistenie ≈ 3–5 % čistého príjmu, teda okolo 50 € mesačne" },
+  { key: "mortgage", label: "Hypotéka", basisLabel: "Výška úveru", unit: "€", basis: 100000, rate: 0.2, count: 1,
+    hint: "medián novej hypotéky na Slovensku ≈ 100 000 € (NBS)" },
+  { key: "realty", label: "Predaj nehnuteľnosti", basisLabel: "Hodnota nehnuteľnosti", unit: "€", basis: 200000, rate: 0.5, count: 1,
+    hint: "byt 60 m² × priemerná cena ≈ 3 400 €/m² (NBS, 2026)" },
+  { key: "invest", label: "Pravidelná investícia", basisLabel: "Ročné vklady", unit: "€ / rok", basis: 1200, rate: 10, count: 1,
+    hint: "investícia 100 € mesačne" },
+  { key: "property", label: "Poistenie majetku a PZP", basisLabel: "Ročné poistné", unit: "€ / rok", basis: 250, rate: 15, count: 2,
+    hint: "poistenie domácnosti, nehnuteľnosti alebo auta" },
+];
+
+// Úrovne tipéra: čím viac úspešných tipov za rok, tým vyšší bonus ku každej odmene.
+const TIERS = [
+  { key: "start", label: "Štart", desc: "prvé tipy" },
+  { key: "active", label: "Aktívny tipér", desc: "pravidelné tipy" },
+  { key: "partner", label: "Partner", desc: "tipuje každý mesiac" },
+];
+
+const DEFAULTS = {
+  products: Object.fromEntries(PRODUCTS.map((p) => [p.key, { basis: p.basis, rate: p.rate, count: p.count }])),
+  tierActiveFrom: 3, tierActiveBonus: 10, tierPartnerFrom: 6, tierPartnerBonus: 20,
+  net: 1300, targetMonthly: 200, years: 10, invReturn: 6,
+};
+
+// ─── Výpočet ──────────────────────────────────────────────────────────────────
+function fvMonthly(monthly, pct, months) {
+  const i = pct / 100 / 12;
+  if (months <= 0) return 0;
+  return i === 0 ? monthly * months : monthly * (1 + i) * (Math.pow(1 + i, months) - 1) / i;
+}
+
+function computeIncome(v) {
+  const rows = PRODUCTS.map((p) => {
+    const st = v.products[p.key] || { basis: p.basis, rate: p.rate, count: 0 };
+    const basis = clampNum(st.basis, 0, 1e8), rate = clampNum(st.rate, 0, 100), count = Math.round(clampNum(st.count, 0, 100));
+    const reward = basis * rate / 100;
+    return { ...p, basis, rate, count, reward, total: reward * count };
+  });
+  const tips = rows.reduce((t, r) => t + r.count, 0);
+  const base = rows.reduce((t, r) => t + r.total, 0);
+  const activeFrom = Math.max(1, Math.round(v.tierActiveFrom)), partnerFrom = Math.max(activeFrom + 1, Math.round(v.tierPartnerFrom));
+  const tiers = [
+    { ...TIERS[0], from: 1, to: activeFrom - 1, bonus: 0 },
+    { ...TIERS[1], from: activeFrom, to: partnerFrom - 1, bonus: clampNum(v.tierActiveBonus, 0, 100) },
+    { ...TIERS[2], from: partnerFrom, to: null, bonus: clampNum(v.tierPartnerBonus, 0, 100) },
+  ];
+  const tier = tips >= partnerFrom ? tiers[2] : tips >= activeFrom ? tiers[1] : tiers[0];
+  const yearly = base * (1 + tier.bonus / 100);
+  const monthly = yearly / 12;
+  const net = clampNum(v.net, 0, 1e6);
+  // Koľko tipov do vyššej úrovne a o koľko by vzrástla odmena.
+  const nextTier = tier === tiers[0] ? tiers[1] : tier === tiers[1] ? tiers[2] : null;
+  const nextYearly = nextTier ? base * (1 + nextTier.bonus / 100) : null;
+
+  // Cieľ: o koľko mesačne chce klient navýšiť príjem → koľko tipov jedného druhu ročne by stačilo.
+  const target = clampNum(v.targetMonthly, 0, 1e5);
+  const perTarget = rows.filter((r) => r.reward > 0).map((r) => ({ key: r.key, label: r.label, reward: r.reward, tips: target > 0 ? Math.ceil((target * 12) / (r.reward * (1 + tier.bonus / 100))) : 0 }));
+
+  // Reinvestovanie odmien: mesačne 1/12 ročnej odmeny počas `years` rokov.
+  const years = Math.round(clampNum(v.years, 1, 40));
+  const invPct = clampNum(v.invReturn, 0, 20);
+  const fv = fvMonthly(monthly, invPct, years * 12);
+  const series = [];
+  for (let y = 0; y <= years; y++) series.push({ year: y, invested: yearly * y, value: fvMonthly(monthly, invPct, y * 12) });
+
+  return { rows, tips, base, tiers, tier, yearly, monthly, net, raisePct: net > 0 ? (monthly / net) * 100 : null, nextTier, nextYearly, target, perTarget, years, invPct, fv, invested: yearly * years, series };
+}
+
+const eurR = (n) => (n == null || !isFinite(n) ? "—" : fmtEUR(Math.round(n)));
+const fmtPct = (n) => `${fmtNum(n, 2)} %`;
+const tipov = (n) => (n === 1 ? "tip" : n >= 2 && n <= 4 ? "tipy" : "tipov");
+const rokov = (n) => (n === 1 ? "rok" : n >= 2 && n <= 4 ? "roky" : "rokov");
+
+// ─── UI prvky ─────────────────────────────────────────────────────────────────
+const parseNum = (s) => parseFloat(String(s).replace(/[\s  ]/g, "").replace(",", "."));
+function NumInput({ value, onChange, className, style, ariaLabel, decimals = 2 }) {
+  const [draft, setDraft] = useState(null);
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      className={className}
+      style={style}
+      aria-label={ariaLabel}
+      value={draft != null ? draft : fmtNum(value, decimals)}
+      onFocus={(e) => { setDraft(String(Math.round(value * 10000) / 10000).replace(".", ",")); requestAnimationFrame(() => e.target.select()); }}
+      onBlur={() => setDraft(null)}
+      onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
+      onChange={(e) => {
+        const s = e.target.value.replace(/[^\d\s ,.\-]/g, "");
+        setDraft(s);
+        const n = parseNum(s);
+        onChange(isFinite(n) ? Math.max(0, n) : 0);
+      }}
+    />
+  );
+}
+
+function Field({ label, unit, value, onChange, min, max, step, hint, slider = true }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-baseline justify-between gap-2">
+        <label className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{label}</label>
+        <span className="text-xs text-right" style={{ color: "var(--text-muted)" }}>{unit}</span>
+      </div>
+      <NumInput className="w-full rounded-lg px-3 py-2 text-base font-semibold font-mono-num" value={value} onChange={onChange}
+        ariaLabel={label} decimals={step < 1 ? 4 : 0} />
+      {slider && (
+        <input type="range" min={min} max={max} step={step} value={Math.min(max, value)}
+          onChange={(e) => onChange(parseFloat(e.target.value))} aria-label={label} />
+      )}
+      {hint && <div className="text-xs" style={{ color: "var(--text-muted)" }}>{hint}</div>}
+    </div>
+  );
+}
+
+function Segmented({ options, value, onChange, label }) {
+  return (
+    <div className="segmented" role="group" aria-label={label}>
+      {options.map((o) => (
+        <button key={o.value} type="button" aria-pressed={value === o.value} onClick={() => onChange(o.value)}>
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SectionTitle({ children, right }) {
+  return (
+    <div className="flex items-center justify-between gap-2 pt-5" style={{ borderTop: "1px solid var(--border)" }}>
+      <h3 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--accent)" }}>{children}</h3>
+      {right}
+    </div>
+  );
+}
+
+function StatChip({ label, value, sub, tone }) {
+  const color = tone === "danger" ? "var(--danger)" : tone === "accent" ? "var(--accent)" : "var(--text-primary)";
+  return (
+    <div className="flex-1 min-w-[8.5rem] rounded-xl px-4 py-3" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
+      <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>{label}</div>
+      <div className="font-mono-num text-xl font-semibold mt-1" style={{ color }}>{value}</div>
+      {sub && <div className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{sub}</div>}
+    </div>
+  );
+}
+
+// Graf: odmeny vložené do investície vs. hodnota investície.
+function GrowthChart({ c, colors, print }) {
+  const W = 640, H = 240, padL = 64, padR = 14, padT = 14, padB = 30;
+  const pw = W - padL - padR, ph = H - padT - padB;
+  const pts = c.series;
+  const maxV = Math.max(1, ...pts.map((p) => p.value));
+  const mag = Math.pow(10, Math.floor(Math.log10(maxV / 4)));
+  const step = [1, 2, 2.5, 5, 10].map((k) => k * mag).find((s) => s * 4 >= maxV) || mag * 10;
+  const top = step * Math.ceil(maxV / step);
+  const x = (y) => padL + (c.years ? y / c.years : 0) * pw;
+  const yv = (v) => padT + ph - (v / top) * ph;
+  const line = (key) => pts.map((p, i) => `${i ? "L" : "M"}${x(p.year).toFixed(1)},${yv(p[key]).toFixed(1)}`).join(" ");
+  const area = (key) => `${line(key)} L${x(c.years)},${yv(0)} L${x(0)},${yv(0)} Z`;
+  const ticks = [];
+  for (let v = 0; v <= top + 0.5; v += step) ticks.push(v);
+  const every = c.years <= 10 ? 1 : c.years <= 20 ? 2 : 5;
+  const ink = print ? "#7c8b86" : "var(--text-muted)";
+  const grid = print ? "#e4e4e0" : "var(--border)";
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} style={{ width: "100%", height: "auto", display: "block" }} role="img" aria-label="Reinvestované odmeny v čase">
+      {ticks.map((v) => (
+        <g key={v}>
+          <line x1={padL} x2={W - padR} y1={yv(v)} y2={yv(v)} stroke={grid} />
+          <text x={padL - 8} y={yv(v) + 3} textAnchor="end" style={{ fontSize: 10, fill: ink }}>{v >= 1000 ? `${fmtNum(v / 1000, 1)} tis. €` : `${fmtNum(v, 0)} €`}</text>
+        </g>
+      ))}
+      {pts.filter((p) => p.year % every === 0).map((p) => (
+        <text key={p.year} x={x(p.year)} y={H - 10} textAnchor="middle" style={{ fontSize: 10, fill: ink }}>{p.year}. rok</text>
+      ))}
+      <path d={area("value")} fill={colors.value} opacity="0.16" />
+      <path d={area("invested")} fill={colors.invested} opacity="0.14" />
+      <path d={line("invested")} fill="none" stroke={colors.invested} strokeWidth="2" strokeDasharray="5 4" />
+      <path d={line("value")} fill="none" stroke={colors.value} strokeWidth="2.5" />
+    </svg>
+  );
+}
+
+// ─── Ilustrácie úvodu (štýl ako v ostatných kalkulačkách) ─────────────────────
+const tipSceneSvgs = (font) => ({
+  free: `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200">
+  <rect width="320" height="200" fill="#dde3e1"/>
+  <rect x="22" y="34" width="150" height="40" rx="10" fill="#ffffff"/><path d="M66 74 L74 84 L80 74 Z" fill="#ffffff"/>
+  <text x="97" y="51" text-anchor="middle" font-family="${font}" font-size="11" font-weight="700" fill="#465753">Nepoznáš niekoho</text>
+  <text x="97" y="66" text-anchor="middle" font-family="${font}" font-size="11" font-weight="700" fill="#465753">na hypotéku?</text>
+  <rect x="176" y="44" width="130" height="40" rx="10" fill="#ffffff"/><path d="M252 84 L246 92 L240 84 Z" fill="#ffffff"/>
+  <text x="241" y="61" text-anchor="middle" font-family="${font}" font-size="11" font-weight="700" fill="#465753">Jasné, zavolaj</text>
+  <text x="241" y="76" text-anchor="middle" font-family="${font}" font-size="11" font-weight="700" fill="#465753">môjmu poradcovi.</text>
+  <circle cx="84" cy="96" r="13" fill="#e6b48c"/><path d="M71 92 Q84 80 97 92 Z" fill="#6b4f36"/>
+  <rect x="70" y="110" width="28" height="42" rx="11" fill="#9fb0ab"/>
+  <rect x="72" y="150" width="10" height="20" rx="3" fill="#465753"/><rect x="86" y="150" width="10" height="20" rx="3" fill="#465753"/>
+  <circle cx="236" cy="104" r="13" fill="#e6b48c"/><path d="M223 100 Q236 88 249 100 Z" fill="#10231f"/>
+  <rect x="222" y="118" width="28" height="36" rx="11" fill="#6b7b77"/>
+  <rect x="224" y="152" width="10" height="18" rx="3" fill="#465753"/><rect x="238" y="152" width="10" height="18" rx="3" fill="#465753"/>
+  <rect x="0" y="170" width="320" height="30" fill="#465753"/>
+  <text x="160" y="190" text-anchor="middle" font-family="${font}" font-size="14" font-weight="700" fill="#ffffff">odporúčanie zadarmo</text>
+</svg>`,
+  paid: `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200">
+  <defs><linearGradient id="tipsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d5eeea"/><stop offset="1" stop-color="#fbf4e4"/></linearGradient></defs>
+  <rect width="320" height="200" fill="url(#tipsky)"/>
+  <circle cx="120" cy="74" r="13" fill="#e6b48c"/><path d="M107 70 Q120 58 133 70 Z" fill="#6b4f36"/>
+  <rect x="106" y="88" width="28" height="48" rx="11" fill="#0f6b5c"/>
+  <rect x="108" y="134" width="10" height="36" rx="3" fill="#10231f"/><rect x="122" y="134" width="10" height="36" rx="3" fill="#10231f"/>
+  <path d="M132 98 L148 86" stroke="#0f6b5c" stroke-width="7" stroke-linecap="round"/>
+  <rect x="144" y="66" width="20" height="32" rx="4" fill="#10231f"/><rect x="147" y="70" width="14" height="22" rx="2" fill="#bfe3d6"/>
+  <rect x="172" y="28" width="120" height="30" rx="10" fill="#ffffff" stroke="#0f6b5c" stroke-width="2"/>
+  <text x="232" y="48" text-anchor="middle" font-family="${font}" font-size="12" font-weight="700" fill="#0f6b5c">Tip odoslaný ✓</text>
+  ${[0, 1, 2, 3].map((i) => `<ellipse cx="236" cy="${156 - i * 9}" rx="22" ry="7" fill="#e3a33b" stroke="#c98a22" stroke-width="2"/>`).join("")}
+  <ellipse cx="236" cy="${156 - 4 * 9}" rx="22" ry="7" fill="#f0c064" stroke="#c98a22" stroke-width="2"/>
+  <text x="236" y="${156 - 4 * 9 + 4}" text-anchor="middle" font-family="${font}" font-size="10" font-weight="700" fill="#8a5a12">€</text>
+  <rect x="264" y="126" width="34" height="30" rx="3" fill="#c23b32"/><rect x="278" y="126" width="6" height="30" fill="#f0c064"/>
+  <rect x="260" y="118" width="42" height="10" rx="2" fill="#d85a50"/><rect x="278" y="118" width="6" height="10" fill="#f0c064"/>
+  <rect x="0" y="170" width="320" height="30" fill="#efe1c2"/>
+  <text x="160" y="190" text-anchor="middle" font-family="${font}" font-size="14" font-weight="700" fill="#10231f">odporúčam a dostávam odmenu</text>
+</svg>`,
+});
+const svgUrl = (svg) => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+const TIP_SCENES = tipSceneSvgs("Arial, sans-serif");
+
+// ─── Motivačný úvod pre klienta ───────────────────────────────────────────────
+// Čísla sú tie isté ako v detaile kalkulačky.
+function computeIncomeMotivation(c) {
+  const top = c.rows.slice(0, 3).map((r) => ({ label: r.label, rate: r.rate, basisLabel: r.basisLabel, basis: r.basis, reward: r.reward }));
+  return {
+    tips: c.tips, yearly: c.yearly, monthly: c.monthly, raisePct: c.raisePct, net: c.net,
+    tier: { label: c.tier.label, bonus: c.tier.bonus },
+    tiers: c.tiers.map((t) => ({ label: t.label, from: t.from, to: t.to, bonus: t.bonus, current: t.key === c.tier.key })),
+    nextTier: c.nextTier ? { label: c.nextTier.label, from: c.nextTier.from, bonus: c.nextTier.bonus } : null,
+    nextGain: c.nextYearly != null ? c.nextYearly - c.yearly : null,
+    top, years: c.years, invPct: c.invPct, fv: c.fv, invested: c.invested,
+  };
+}
+
+function MotTop({ label }) {
+  return (
+    <div className="mot-top">
+      <span className="mot-label">{label}</span>
+      <img className="mot-logo" src={LOGO_DATA_URI} alt="FinCoach" />
+    </div>
+  );
+}
+
+const tierRange = (t) => (t.to == null ? `${t.from}+ ${tipov(t.from)} ročne` : t.from === t.to ? `${t.from} ${tipov(t.from)} ročne` : `${t.from}–${t.to} ${tipov(t.to)} ročne`);
+
+function IncomeMotivationPages({ m, print }) {
+  return (
+    <div className={`mot${print ? " print" : ""}`}>
+      <section className="mot-page">
+        <MotTop label="Úvod pre klienta · Navýšenie príjmu" />
+        <div className="mot-title">Vaše kontakty majú hodnotu</div>
+        <div className="mot-quote">Nemusíte nič predávať.<br />Stačí povedať: „Poznám niekoho, kto vám pomôže.“</div>
+
+        <div className="mot-chips">
+          <div className="mot-chip"><span>Tipov ročne</span><strong className="num">{m.tips}</strong></div>
+          <div className="mot-chip"><span>Odmena ročne</span><strong className="num">{eurR(m.yearly)}</strong></div>
+          <div className="mot-chip"><span>Mesačne</span><strong className="num">{eurR(m.monthly)}</strong></div>
+        </div>
+
+        <p className="mot-story">
+          Každý rok sa niekto vo vašom okolí sťahuje, berie hypotéku, predáva byt, čaká dieťa alebo zistí, že nemá poistenie.
+          Tieto rozhovory sa dejú aj bez vás. Rozdiel je len v tom, či z nich budete mať odmenu.
+        </p>
+        <div className="mot-scenes">
+          <div className="mot-scene"><img src={svgUrl(TIP_SCENES.free)} alt="Odporúčanie poradcu bez odmeny" width="320" height="200" /><span className="mot-tag">DNES</span></div>
+          <div className="mot-scene"><img src={svgUrl(TIP_SCENES.paid)} alt="Odoslaný tip a odmena" width="320" height="200" /><span className="mot-tag good">AKO TIPÉR</span></div>
+        </div>
+
+        <div className="mot-center">
+          <p className="mot-big good">Ročne môžete získať navyše <b>{eurR(m.yearly)}</b></p>
+          {m.raisePct != null && m.raisePct > 0.5 && (
+            <p className="mot-small" style={{ fontStyle: "normal" }}>To je ako mať o {eurR(m.monthly)} vyšší plat — o {fmtNum(m.raisePct, 0)} % viac, než dnes zarábate.</p>
+          )}
+          <div className="mot-pill">Koľko dostanete za jeden tip</div>
+          <div className="mot-early">
+            {m.top.map((t) => (
+              <div key={t.label}>
+                <div className="when">{t.label}</div>
+                <div className="must">{fmtNum(t.rate, 2)} % · {t.basisLabel.toLowerCase()} {eurR(t.basis)}</div>
+                <div className="val">{eurR(t.reward)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {print && <div className="html2pdf__page-break" />}
+
+      <section className="mot-page">
+        <MotTop label="Úvod pre klienta · Navýšenie príjmu" />
+        <div className="mot-title">Pravidelnosť sa vypláca</div>
+        <div className="mot-sub-title">Čím <span className="yes">častejšie</span> tipujete, tým vyššiu odmenu dostanete za <span className="yes">každý</span> tip.</div>
+
+        <div className="mot-center" style={{ marginTop: "14px" }}>
+          <div className="mot-early">
+            {m.tiers.map((t) => (
+              <div key={t.label} style={t.current ? { boxShadow: "0 0 0 2px #0f6b5c" } : { background: "#f5f7f5", borderColor: "#e3e8e5" }}>
+                <div className="when">{t.label}{t.current ? " ✓" : ""}</div>
+                <div className="must">{tierRange(t)}</div>
+                <div className="val">{t.bonus > 0 ? `+${fmtNum(t.bonus, 0)} %` : "základ"}</div>
+              </div>
+            ))}
+          </div>
+          {m.nextTier && m.nextGain > 0.5 && (
+            <p className="mot-status">
+              Ste na úrovni <b>{m.tier.label}</b>. Pri {m.nextTier.from} {tipov(m.nextTier.from)} ročne sa dostanete na úroveň <b>{m.nextTier.label}</b> a za rovnaké tipy získate o <b className="num">{eurR(m.nextGain)}</b> viac.
+            </p>
+          )}
+
+          <div className="mot-pill">Čo z odmien vyrastie</div>
+          <p className="mot-need">
+            Keď odmeny {eurR(m.yearly)} ročne pošlete do investície, o {m.years} {rokov(m.years)} budete mať <b>{eurR(m.fv)}</b>.
+          </p>
+          <p className="mot-small" style={{ fontStyle: "normal" }}>
+            Z vložených {eurR(m.invested)} pri výnose {fmtNum(m.invPct, 1)} % ročne. Tipy tak môžu zaplatiť sporenie pre deti, mimoriadne splátky hypotéky alebo dôchodok.
+          </p>
+
+          <div className="mot-divider"><span /><span /><span /></div>
+          <p className="mot-some">
+            Ľudia neodporúčajú <span className="no">produkty</span>.<br />
+            Odporúčajú <span className="yes">ľudí, ktorým veria</span>.
+          </p>
+          <div className="mot-divider"><span /><span /><span /></div>
+          <p className="mot-end">{m.tips} {tipov(m.tips)} ročne = {eurR(m.monthly)} navyše každý mesiac.</p>
+        </div>
+        <p className="mot-note">
+          Tipér len odovzdá kontakt na človeka, ktorý s tým súhlasí; nič neradí ani nepredáva. Odmena sa vypláca po uzavretí zmluvy (pri poistení po zaplatení poistného).
+          Sadzby a základy sú orientačné a konkrétne podmienky určuje dohoda o spolupráci. Odmena je zdaniteľný príjem — príležitostné príjmy do 500 € ročne sú od dane oslobodené, nad túto sumu sa zdaňujú.
+          Výnos investície nie je zaručený. Ilustratívny prepočet.
+        </p>
+      </section>
+    </div>
+  );
+}
+
+// ─── Karty kalkulačky ─────────────────────────────────────────────────────────
+function ProductsCard({ v, setProduct, c }) {
+  return (
+    <section className="card p-6 flex flex-col gap-5">
+      <h2 className="text-sm font-bold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Tipy a odmeny</h2>
+      {c.rows.map((r) => (
+        <div key={r.key} className="flex flex-col gap-3 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="font-bold">{r.label}</span>
+            <span className="font-mono-num font-semibold" style={{ color: "var(--accent)" }}>{fmtEUR(Math.round(r.reward))} / tip</span>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <Field label={r.basisLabel} unit={r.unit} value={r.basis} slider={false} onChange={(x) => setProduct(r.key, { basis: x })} min={0} max={1e7} step={100} />
+            <Field label="Odmena" unit="%" value={r.rate} slider={false} onChange={(x) => setProduct(r.key, { rate: x })} min={0} max={100} step={0.1} />
+            <Field label="Tipov ročne" unit="počet" value={r.count} slider={false} onChange={(x) => setProduct(r.key, { count: x })} min={0} max={50} step={1} />
+          </div>
+          <span className="text-xs" style={{ color: "var(--text-muted)" }}>{r.hint}</span>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+function ResultsCard({ c, v, set }) {
+  return (
+    <section className="card p-6 flex flex-col gap-5">
+      <div>
+        <h2 className="text-sm font-bold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Odmena ročne</h2>
+        <div className="font-mono-num text-4xl font-bold mt-1" style={{ color: "var(--accent)" }}>{fmtEUR(Math.round(c.yearly))}</div>
+        <div className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
+          {c.tips} {tipov(c.tips)} ročne · úroveň {c.tier.label}{c.tier.bonus > 0 ? ` (+${fmtNum(c.tier.bonus, 0)} %)` : ""}
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-3">
+        <StatChip label="Mesačne" value={fmtEUR(Math.round(c.monthly))} sub={c.raisePct != null ? `+${fmtNum(c.raisePct, 1)} % k čistému príjmu` : " "} tone="accent" />
+        <StatChip label="Bez bonusu" value={fmtEUR(Math.round(c.base))} sub="súčet základných odmien" />
+      </div>
+      <Field label="Čistý mesačný príjem klienta" unit="EUR / mes." value={v.net} onChange={set("net")} min={0} max={6000} step={50} />
+
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-bold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Úrovne tipéra</span>
+        {c.tiers.map((t) => (
+          <div key={t.key} className="grid items-center gap-3 text-sm rounded-lg px-3 py-2" style={{ gridTemplateColumns: "minmax(0,1fr) auto auto", background: t.key === c.tier.key ? "var(--accent-soft)" : "transparent", border: "1px solid var(--border)" }}>
+            <span className="font-semibold">{t.label}{t.key === c.tier.key ? " ✓" : ""}</span>
+            <span className="font-mono-num" style={{ color: "var(--text-secondary)" }}>{tierRange(t)}</span>
+            <span className="font-mono-num font-semibold">{t.bonus > 0 ? `+${fmtNum(t.bonus, 0)} %` : "základ"}</span>
+          </div>
+        ))}
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Aktívny tipér od" unit="tipov ročne" value={v.tierActiveFrom} slider={false} onChange={set("tierActiveFrom")} min={1} max={20} step={1} />
+          <Field label="Bonus aktívny" unit="%" value={v.tierActiveBonus} slider={false} onChange={set("tierActiveBonus")} min={0} max={100} step={1} />
+          <Field label="Partner od" unit="tipov ročne" value={v.tierPartnerFrom} slider={false} onChange={set("tierPartnerFrom")} min={2} max={40} step={1} />
+          <Field label="Bonus partner" unit="%" value={v.tierPartnerBonus} slider={false} onChange={set("tierPartnerBonus")} min={0} max={100} step={1} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TargetCard({ c, v, set }) {
+  return (
+    <section className="card p-6 flex flex-col gap-4">
+      <h2 className="text-sm font-bold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Koľko tipov na cieľ</h2>
+      <Field label="Chcem si mesačne privyrobiť" unit="EUR / mes." value={v.targetMonthly} onChange={set("targetMonthly")} min={0} max={2000} step={10} />
+      <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Na {fmtEUR(Math.round(c.target))} mesačne ({fmtEUR(Math.round(c.target * 12))} ročne) by pri úrovni {c.tier.label} stačilo ročne napríklad:</p>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        {c.perTarget.map((p) => (
+          <div key={p.key} className="rounded-xl px-3 py-3 text-center" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
+            <div className="font-mono-num text-2xl font-bold" style={{ color: "var(--accent)" }}>{p.tips}</div>
+            <div className="text-xs font-semibold mt-1">{p.label.toLowerCase().replace("pzp", "PZP")}</div>
+          </div>
+        ))}
+      </div>
+      <p className="text-xs" style={{ color: "var(--text-muted)" }}>Každý údaj platí samostatne — v praxi sa tipy kombinujú.</p>
+    </section>
+  );
+}
+
+function ReinvestCard({ c, v, set, colors }) {
+  return (
+    <section className="card p-6 flex flex-col gap-4">
+      <h2 className="text-sm font-bold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Čo z odmien vyrastie</h2>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <Field label="Investovať počas" unit="rokov" value={v.years} onChange={set("years")} min={1} max={30} step={1} />
+        <Field label="Očakávaný výnos" unit="% p. a." value={v.invReturn} onChange={set("invReturn")} min={0} max={12} step={0.1} />
+      </div>
+      <div className="flex flex-wrap gap-3">
+        <StatChip label={`Hodnota o ${c.years} ${rokov(c.years)}`} value={fmtEUR(Math.round(c.fv))} tone="accent" />
+        <StatChip label="Vložené odmeny" value={fmtEUR(Math.round(c.invested))} />
+        <StatChip label="Výnos" value={fmtEUR(Math.round(c.fv - c.invested))} />
+      </div>
+      <div className="flex items-center gap-4 text-xs" style={{ color: "var(--text-secondary)" }}>
+        <span className="flex items-center gap-1.5"><span style={{ width: 14, height: 3, background: colors.value, display: "inline-block" }} />Hodnota investície</span>
+        <span className="flex items-center gap-1.5"><span style={{ width: 14, height: 3, background: colors.invested, display: "inline-block" }} />Vložené odmeny</span>
+      </div>
+      <GrowthChart c={c} colors={colors} />
+    </section>
+  );
+}
+
+// ─── PDF ──────────────────────────────────────────────────────────────────────
+function PrintDocument({ printRef, clientName, c, motivation, includeIntro }) {
+  const dateStr = new Date().toLocaleDateString("sk-SK");
+  const box = { border: "1px solid #e4e4e0", borderRadius: "8px", padding: "8px 10px" };
+  const th = { textAlign: "left", fontSize: "9px", color: "#7c8b86", textTransform: "uppercase", padding: "6px 8px", borderBottom: "1px solid #e4e4e0" };
+  const td = { padding: "7px 8px", borderBottom: "1px solid #eeeeea", fontSize: "12px" };
+  return (
+    <div ref={printRef} id="pdf-export-root"
+      style={{
+        width: "794px", maxWidth: "100%", margin: "0 auto", background: "#ffffff", color: "#10231f", padding: "40px",
+        fontFamily: '"Manrope", system-ui, -apple-system, sans-serif', fontSize: "12px",
+        "--bg": "#f5f7f5", "--surface": "#ffffff", "--text-primary": "#10231f", "--text-secondary": "#4b5b57",
+        "--text-muted": "#7c8b86", "--accent": "#0f6b5c", "--accent-soft": "#e3f1ec", "--border": "rgba(16,35,31,0.10)",
+        "--border-strong": "rgba(16,35,31,0.16)", "--danger": "#c23b32",
+      }}>
+      {includeIntro && motivation && (
+        <>
+          <IncomeMotivationPages m={motivation} print />
+          <div className="html2pdf__page-break" />
+          <div style={{ height: "10px" }} />
+        </>
+      )}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2px solid #0f6b5c", paddingBottom: "16px", marginBottom: "22px" }}>
+        <img src={LOGO_DATA_URI} alt="FinCoach" style={{ height: "34px", width: "auto", display: "block" }} />
+        <div style={{ textAlign: "right", fontSize: "11px", color: "#7c8b86" }}>
+          <div>Navýšenie príjmu · tipérsky program</div>
+          <div>Vygenerované: {dateStr}</div>
+        </div>
+      </div>
+      {clientName && <div style={{ fontSize: "26px", fontWeight: 800, lineHeight: 1.2, color: "#0f6b5c", marginBottom: "6px" }}>{clientName}</div>}
+      <h1 style={{ fontSize: "20px", fontWeight: 800, margin: "0 0 4px" }}>Odmeny za odporúčania</h1>
+      <p style={{ fontSize: "11px", color: "#4b5b57", margin: "0 0 20px", maxWidth: "620px" }}>
+        Odhad ročných odmien za úspešné tipy podľa druhu produktu a úrovne tipéra. Sadzby sú orientačné, podmienky určuje dohoda o spolupráci.
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", marginBottom: "16px" }}>
+        {[["Odmena ročne", fmtEUR(Math.round(c.yearly))], ["Mesačne", fmtEUR(Math.round(c.monthly))], ["Úroveň", `${c.tier.label}${c.tier.bonus ? ` (+${fmtNum(c.tier.bonus, 0)} %)` : ""}`]].map(([l, val]) => (
+          <div key={l} style={{ ...box, borderColor: "#0f6b5c" }}>
+            <div style={{ fontSize: "9px", color: "#0f6b5c", textTransform: "uppercase", fontWeight: 700 }}>{l}</div>
+            <div style={{ fontSize: "16px", fontWeight: 800 }}>{val}</div>
+          </div>
+        ))}
+      </div>
+      <table className="pdf-avoid-break" style={{ width: "100%", borderCollapse: "collapse", marginBottom: "16px" }}>
+        <thead><tr><th style={th}>Produkt</th><th style={{ ...th, textAlign: "right" }}>Základ</th><th style={{ ...th, textAlign: "right" }}>Sadzba</th><th style={{ ...th, textAlign: "right" }}>Odmena / tip</th><th style={{ ...th, textAlign: "right" }}>Tipov</th><th style={{ ...th, textAlign: "right" }}>Spolu</th></tr></thead>
+        <tbody>
+          {c.rows.map((r) => (
+            <tr key={r.key}>
+              <td style={{ ...td, fontWeight: 700 }}>{r.label}</td>
+              <td style={{ ...td, textAlign: "right" }}>{fmtEUR(r.basis)}</td>
+              <td style={{ ...td, textAlign: "right" }}>{fmtNum(r.rate, 2)} %</td>
+              <td style={{ ...td, textAlign: "right" }}>{fmtEUR(Math.round(r.reward))}</td>
+              <td style={{ ...td, textAlign: "right" }}>{r.count}</td>
+              <td style={{ ...td, textAlign: "right", fontWeight: 700 }}>{fmtEUR(Math.round(r.total))}</td>
+            </tr>
+          ))}
+          {c.tier.bonus > 0 && (
+            <tr><td style={td} colSpan={5}>Bonus za úroveň {c.tier.label} (+{fmtNum(c.tier.bonus, 0)} %)</td><td style={{ ...td, textAlign: "right", fontWeight: 700 }}>{fmtEUR(Math.round(c.yearly - c.base))}</td></tr>
+          )}
+        </tbody>
+      </table>
+      <div className="pdf-avoid-break" style={{ breakInside: "avoid", marginBottom: "16px" }}>
+        <h2 style={{ fontSize: "14px", fontWeight: 800, margin: "0 0 8px" }}>Reinvestované odmeny: {fmtEUR(Math.round(c.fv))} o {c.years} {rokov(c.years)} (výnos {fmtNum(c.invPct, 1)} % ročne)</h2>
+        <GrowthChart c={c} colors={PRINT_COLORS} print />
+      </div>
+      <div style={{ marginTop: "8px", paddingTop: "14px", borderTop: "1px solid #e4e4e0", fontSize: "9px", color: "#7c8b86", display: "flex", justifyContent: "space-between", gap: "12px" }}>
+        <span>FinCoach · roman.capak@fincoach.sk · +421 910 252 036</span>
+        <span>Automaticky vygenerovaný prehľad, slúži len na ilustráciu.</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Prepojenie s finančným plánom (plan.html) — aktívne len pri ?plan=1 ──────
+// Z profilu sa berie čistý príjem klienta (na porovnanie s odmenami).
+const PLAN = window.PlanStore && window.PlanStore.isPlanMode() ? window.PlanStore : null;
+if (PLAN) PLAN.mountBar("Navýšenie príjmu", "incomeScaling");
+
+function initialState() {
+  if (!PLAN) return DEFAULTS;
+  const init = PLAN.initialInputs("incomeScaling", DEFAULTS);
+  // Nové produkty doplnené k uloženým vstupom.
+  return { ...init, products: { ...DEFAULTS.products, ...(init.products || {}) } };
+}
+
+function summarizeIncome(c, motivation) {
+  return {
+    tips: c.tips, yearly: Math.round(c.yearly), monthly: Math.round(c.monthly), base: Math.round(c.base),
+    tier: { label: c.tier.label, bonus: c.tier.bonus }, raisePct: c.raisePct, net: c.net,
+    rows: c.rows.map((r) => ({ key: r.key, label: r.label, basis: r.basis, rate: r.rate, reward: Math.round(r.reward), count: r.count, total: Math.round(r.total) })),
+    tiers: c.tiers.map((t) => ({ label: t.label, from: t.from, to: t.to, bonus: t.bonus })),
+    years: c.years, invPct: c.invPct, fv: Math.round(c.fv), invested: Math.round(c.invested),
+    series: c.series.map((p) => ({ year: p.year, invested: Math.round(p.invested), value: Math.round(p.value) })),
+    motivation, // úvod pre klienta — ide aj do PDF plánu (kapitola Navýšenie príjmu)
+  };
+}
+
+function App() {
+  const [v, setV] = useState(initialState);
+  const set = (key) => (val) => setV((prev) => ({ ...prev, [key]: val }));
+  const setProduct = (key, patch) => setV((prev) => ({ ...prev, products: { ...prev.products, [key]: { ...prev.products[key], ...patch } } }));
+  const [clientName, setClientName] = useState(() => (PLAN ? PLAN.clientName(PLAN.load()) : ""));
+  const [exporting, setExporting] = useState(false);
+  const printRef = useRef(null);
+
+  const c = useMemo(() => computeIncome(v), [v]);
+  const motivation = useMemo(() => computeIncomeMotivation(c), [c]);
+
+  const readPref = (key, dflt) => { try { const x = localStorage.getItem(key); return x == null ? dflt : x === "1"; } catch (e) { return dflt; } };
+  const [showIntro, setShowIntroState] = useState(() => readPref("prijmova:intro", true));
+  const [introInPdf, setIntroInPdfState] = useState(() => readPref("prijmova:intro-pdf", true));
+  const setShowIntro = (on) => { setShowIntroState(on); try { localStorage.setItem("prijmova:intro", on ? "1" : "0"); } catch (e) {} };
+  const setIntroInPdf = (on) => { setIntroInPdfState(on); try { localStorage.setItem("prijmova:intro-pdf", on ? "1" : "0"); } catch (e) {} };
+
+  useEffect(() => {
+    if (!PLAN) return;
+    const t = setTimeout(() => PLAN.saveModule("incomeScaling", v, summarizeIncome(c, motivation)), 300);
+    return () => clearTimeout(t);
+  }, [c, motivation]);
+
+  const cssColor = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "#999";
+  const colors = { invested: cssColor("--slot-state"), value: cssColor("--slot-insurance") };
+
+  // Rovnaký postup exportu ako v ostatných kalkulačkách.
+  useEffect(() => {
+    if (!exporting) return;
+    let cancelled = false;
+    const scrollBack = window.scrollY;
+    (async () => {
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      if (cancelled) return;
+      const el = printRef.current;
+      if (!window.html2pdf || !el) { setExporting(false); return; }
+      try {
+        const dateSlug = new Date().toISOString().slice(0, 10);
+        const nameSlug = clientName.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+        const filename = `navysenie-prijmu-${nameSlug ? nameSlug + "-" : ""}${dateSlug}.pdf`;
+        window.scrollTo(0, 0);
+        const blob = await window.html2pdf().set({
+          margin: [10, 10, 14, 10],
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, backgroundColor: "#ffffff", useCORS: true, scrollX: 0, scrollY: 0 },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+          pagebreak: { mode: ["css", "legacy"], avoid: [".pdf-avoid-break"] },
+        }).from(el).outputPdf("blob");
+        if (cancelled) return;
+        if (typeof window.claude !== "undefined" && window.claude && window.claude.use) {
+          const downloadsApi = await window.claude.use("downloads");
+          if (downloadsApi) await downloadsApi.save({ filename, data: blob }).catch(() => {});
+        } else {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url; a.download = filename;
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      } finally {
+        if (!cancelled) { setExporting(false); requestAnimationFrame(() => window.scrollTo(0, scrollBack)); }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [exporting]);
+
+  const quick = PRODUCTS.slice(0, 3);
+
+  return (
+    <div className="min-h-full px-4 py-10 md:py-16" style={{ background: "var(--bg)" }}>
+      {exporting ? (
+        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+          <div className="fade-in" style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
+            <span className="btn-accent" style={{ cursor: "default" }}>Generujem PDF…</span>
+          </div>
+          <PrintDocument printRef={printRef} clientName={clientName.trim()} c={c} motivation={motivation} includeIntro={introInPdf} />
+        </div>
+      ) : (
+        <div className="mx-auto w-full flex flex-col gap-8" style={{ maxWidth: "1024px" }}>
+          {showIntro && (
+            <section className="flex flex-col gap-4 fade-in" aria-label="Úvod pre klienta">
+              <div className="card p-4 flex flex-col gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--accent)" }}>Úvod pre klienta</span>
+                  <button type="button" className="text-xs font-semibold underline" style={{ color: "var(--text-secondary)" }} onClick={() => setShowIntro(false)}>Skryť úvod</button>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 items-end">
+                  {quick.map((p) => (
+                    <Field key={p.key} label={p.label} unit="tipov ročne" value={v.products[p.key].count} onChange={(x) => setProduct(p.key, { count: x })} min={0} max={20} step={1} />
+                  ))}
+                  <Field label="Čistý príjem" unit="EUR / mes." value={v.net} onChange={set("net")} min={0} max={6000} step={50} />
+                </div>
+              </div>
+              <IncomeMotivationPages m={motivation} />
+              <div className="flex justify-center">
+                <a href="#kalkulacia" className="btn-accent" style={{ fontSize: "1rem", padding: "0.8rem 1.6rem", textDecoration: "none", whiteSpace: "normal", textAlign: "center" }}>Poďme to prepočítať presne ↓</a>
+              </div>
+            </section>
+          )}
+
+          <header id="kalkulacia" className="flex flex-col gap-4" style={{ scrollMarginTop: "16px" }}>
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--accent)" }}>Kalkulačka</span>
+              <h1 className="text-3xl md:text-4xl font-extrabold" style={{ color: "var(--text-primary)", textWrap: "balance" }}>Navýšenie príjmu tipovaním</h1>
+              <p className="text-sm md:text-base max-w-2xl" style={{ color: "var(--text-secondary)" }}>
+                Koľko môže klient zarobiť, keď odporučí známych, ktorí riešia poistenie, hypotéku, predaj nehnuteľnosti či investovanie. Kalkulačka spočíta ročnú odmenu, bonus za pravidelné tipovanie, koľko tipov treba na želané navýšenie príjmu a čo z odmien vyrastie, keď ich klient investuje.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-end justify-between gap-3 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
+              <div className="flex flex-col gap-2 w-full max-w-md">
+                <label htmlFor="client-name" className="text-sm font-semibold">Meno klienta</label>
+                <input id="client-name" type="text" className="w-full rounded-lg px-3 py-2 text-base font-semibold"
+                  placeholder="nepovinné, zobrazí sa v PDF" maxLength={80}
+                  value={clientName} onChange={(e) => setClientName(e.target.value)} />
+              </div>
+              <div className="flex flex-wrap items-center gap-4">
+                {!showIntro && (
+                  <button type="button" className="text-sm font-semibold underline" style={{ color: "var(--accent)" }} onClick={() => { setShowIntro(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+                    Zobraziť úvod pre klienta
+                  </button>
+                )}
+                <label className="flex items-center gap-2 text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>
+                  <input type="checkbox" checked={introInPdf} onChange={(e) => setIntroInPdf(e.target.checked)} />
+                  Úvod pre klienta v PDF
+                </label>
+                <button className="btn-accent" onClick={() => setExporting(true)} disabled={exporting}>Exportovať do PDF</button>
+              </div>
+            </div>
+          </header>
+
+          <div className="grid md:grid-cols-2 gap-6 items-start">
+            <ProductsCard v={v} setProduct={setProduct} c={c} />
+            <div className="md:sticky md:top-4 flex flex-col gap-6 min-w-0">
+              <ResultsCard c={c} v={v} set={set} />
+            </div>
+          </div>
+
+          <TargetCard c={c} v={v} set={set} />
+          <ReinvestCard c={c} v={v} set={set} colors={colors} />
+
+          <footer className="text-xs" style={{ color: "var(--text-muted)" }}>
+            Odmena za tip = základ × sadzba; vypláca sa po uzavretí zmluvy (pri poistení po zaplatení poistného). Bonus úrovne sa pripočíta ku všetkým odmenám v roku podľa počtu úspešných tipov.
+            Predvolené základy sú orientačné podľa trhu: medián novej hypotéky ≈ 100 000 € a priemerná cena bytu ≈ 3 400 €/m² (NBS, 2026), rizikové životné poistenie ≈ 3–5 % čistého príjmu.
+            Reinvestovanie: ročná odmena ÷ 12 mesačne, vklad na začiatku mesiaca, mesačné zloženie výnosu; výnos nie je zaručený.
+            Tipér len odovzdá kontakt so súhlasom dotknutej osoby. Odmena je zdaniteľný príjem, príležitostné príjmy do 500 € ročne sú oslobodené od dane. Konkrétne sadzby a podmienky určuje dohoda o spolupráci.
+          </footer>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>

@@ -166,7 +166,7 @@
     },
     {
       key: "incomeScaling",
-      isActive: (s) => !!s && hasItems(s.steps),
+      isActive: (s) => !!s && (!!s.referral || hasItems(s.steps)),
       render: renderIncomeScaling,
     },
   ];
@@ -1746,7 +1746,52 @@
   // ---------------------------------------------------------------------------
   // Income scaling
   // ---------------------------------------------------------------------------
+  // Ilustrácie úvodu k tipérskemu programu (rovnaké ako v kalkulačke navýšenia príjmu).
+  const tipSceneSvgs = (font) => ({
+    free: `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200">
+    <rect width="320" height="200" fill="#dde3e1"/>
+    <rect x="22" y="34" width="150" height="40" rx="10" fill="#ffffff"/><path d="M66 74 L74 84 L80 74 Z" fill="#ffffff"/>
+    <text x="97" y="51" text-anchor="middle" font-family="${font}" font-size="11" font-weight="700" fill="#465753">Nepoznáš niekoho</text>
+    <text x="97" y="66" text-anchor="middle" font-family="${font}" font-size="11" font-weight="700" fill="#465753">na hypotéku?</text>
+    <rect x="176" y="44" width="130" height="40" rx="10" fill="#ffffff"/><path d="M252 84 L246 92 L240 84 Z" fill="#ffffff"/>
+    <text x="241" y="61" text-anchor="middle" font-family="${font}" font-size="11" font-weight="700" fill="#465753">Jasné, zavolaj</text>
+    <text x="241" y="76" text-anchor="middle" font-family="${font}" font-size="11" font-weight="700" fill="#465753">môjmu poradcovi.</text>
+    <circle cx="84" cy="96" r="13" fill="#e6b48c"/><path d="M71 92 Q84 80 97 92 Z" fill="#6b4f36"/>
+    <rect x="70" y="110" width="28" height="42" rx="11" fill="#9fb0ab"/>
+    <rect x="72" y="150" width="10" height="20" rx="3" fill="#465753"/><rect x="86" y="150" width="10" height="20" rx="3" fill="#465753"/>
+    <circle cx="236" cy="104" r="13" fill="#e6b48c"/><path d="M223 100 Q236 88 249 100 Z" fill="#10231f"/>
+    <rect x="222" y="118" width="28" height="36" rx="11" fill="#6b7b77"/>
+    <rect x="224" y="152" width="10" height="18" rx="3" fill="#465753"/><rect x="238" y="152" width="10" height="18" rx="3" fill="#465753"/>
+    <rect x="0" y="170" width="320" height="30" fill="#465753"/>
+    <text x="160" y="190" text-anchor="middle" font-family="${font}" font-size="14" font-weight="700" fill="#ffffff">odporúčanie zadarmo</text>
+  </svg>`,
+    paid: `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200">
+    <defs><linearGradient id="tipsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d5eeea"/><stop offset="1" stop-color="#fbf4e4"/></linearGradient></defs>
+    <rect width="320" height="200" fill="url(#tipsky)"/>
+    <circle cx="120" cy="74" r="13" fill="#e6b48c"/><path d="M107 70 Q120 58 133 70 Z" fill="#6b4f36"/>
+    <rect x="106" y="88" width="28" height="48" rx="11" fill="#0f6b5c"/>
+    <rect x="108" y="134" width="10" height="36" rx="3" fill="#10231f"/><rect x="122" y="134" width="10" height="36" rx="3" fill="#10231f"/>
+    <path d="M132 98 L148 86" stroke="#0f6b5c" stroke-width="7" stroke-linecap="round"/>
+    <rect x="144" y="66" width="20" height="32" rx="4" fill="#10231f"/><rect x="147" y="70" width="14" height="22" rx="2" fill="#bfe3d6"/>
+    <rect x="172" y="28" width="120" height="30" rx="10" fill="#ffffff" stroke="#0f6b5c" stroke-width="2"/>
+    <text x="232" y="48" text-anchor="middle" font-family="${font}" font-size="12" font-weight="700" fill="#0f6b5c">Tip odoslaný ✓</text>
+    ${[0, 1, 2, 3].map((i) => `<ellipse cx="236" cy="${156 - i * 9}" rx="22" ry="7" fill="#e3a33b" stroke="#c98a22" stroke-width="2"/>`).join("")}
+    <ellipse cx="236" cy="${156 - 4 * 9}" rx="22" ry="7" fill="#f0c064" stroke="#c98a22" stroke-width="2"/>
+    <text x="236" y="${156 - 4 * 9 + 4}" text-anchor="middle" font-family="${font}" font-size="10" font-weight="700" fill="#8a5a12">€</text>
+    <rect x="264" y="126" width="34" height="30" rx="3" fill="#c23b32"/><rect x="278" y="126" width="6" height="30" fill="#f0c064"/>
+    <rect x="260" y="118" width="42" height="10" rx="2" fill="#d85a50"/><rect x="278" y="118" width="6" height="10" fill="#f0c064"/>
+    <rect x="0" y="170" width="320" height="30" fill="#efe1c2"/>
+    <text x="160" y="190" text-anchor="middle" font-family="${font}" font-size="14" font-weight="700" fill="#10231f">odporúčam a dostávam odmenu</text>
+  </svg>`,
+  });
+  const TIP_SCENES = tipSceneSvgs("Roboto");
+
   function renderIncomeScaling(ctx, s) {
+    const out = [];
+    const ref = s.referral;
+    if (ref && ref.motivation) out.push(...incomeIntro(ctx, ref.motivation));
+    if (ref) out.push(...referralBlocks(ctx, ref));
+    if (!hasItems(s.steps)) return out;
     const steps = (s.steps || []).slice().sort((a, b) => (a.startDate || "").localeCompare(b.startDate || ""));
     let running = s.currentNetMonthly;
     const rows = steps.map((st) => {
@@ -1762,7 +1807,7 @@
     const growth = s.currentNetMonthly > 0 ? ((running - s.currentNetMonthly) / s.currentNetMonthly) * 100 : null;
 
     const alloc = (s.allocation || []).filter((a) => a.pct > 0);
-    return nn([
+    return out.concat(nn([
       tiles([
         tile(ctx, "Čistý príjem dnes", eur(s.currentNetMonthly), "mesačne"),
         tile(ctx, "Po všetkých krokoch", eur(running), growth != null ? `+${pct(growth)}` : " "),
@@ -1776,7 +1821,104 @@
           [th(""), th("Použitie"), th("Podiel", true)],
           alloc.map((a, i) => [swatch(SERIES[i]), td(a.label), tdNum(pct(a.pct))])),
       ]) : null,
+    ]));
+  }
+
+  // Tipérsky program: tabuľka odmien a reinvestovanie (z kalkulačky navýšenia príjmu).
+  function referralBlocks(ctx, r) {
+    const rows = (r.rows || []).map((x) => [
+      td(x.label, { bold: true }), tdNum(eur(x.basis)), tdNum(`${new Intl.NumberFormat("sk-SK", { maximumFractionDigits: 2 }).format(x.rate)} %`),
+      tdNum(eur(x.reward)), tdNum(String(x.count)), tdNum(eur(x.total), { bold: true }),
     ]);
+    if (r.tier && r.tier.bonus > 0) rows.push([td(`Bonus za úroveň ${r.tier.label} (+${r.tier.bonus} %)`), tdNum(""), tdNum(""), tdNum(""), tdNum(""), tdNum(eur(r.yearly - r.base), { bold: true })]);
+    rows.push([td("Spolu ročne", { bold: true }), tdNum(""), tdNum(""), tdNum(""), tdNum(String(r.tips), { bold: true }), tdNum(eur(r.yearly), { bold: true })]);
+    const series = [
+      { label: "Hodnota investície", color: SERIES[2], points: (r.series || []).map((p) => ({ x: p.year, y: p.value })) },
+      { label: "Vložené odmeny", color: SERIES[0], points: (r.series || []).map((p) => ({ x: p.year, y: p.invested })) },
+    ];
+    return [
+      block("Tipérsky program", [
+        tiles([
+          tile(ctx, "Odmena ročne", eur(r.yearly), `${r.tips} ${r.tips === 1 ? "tip" : r.tips < 5 ? "tipy" : "tipov"} · úroveň ${r.tier.label}`),
+          tile(ctx, "Mesačne", eur(r.monthly), isNum(r.raisePct) ? `+${pct(r.raisePct)} k čistému príjmu` : " "),
+          tile(ctx, `Reinvestované o ${r.years} r.`, eur(r.fv), `vložené ${eur(r.invested)}, výnos ${pct(r.invPct)} ročne`),
+        ]),
+        { text: "Odmena za úspešný tip = základ × sadzba, vypláca sa po uzavretí zmluvy. Sadzby sú orientačné, podmienky určuje dohoda o spolupráci.", style: "muted", margin: [0, 8, 0, 4] },
+        dataTable(ctx, ["*", 64, 44, 64, 34, 64],
+          [th("Produkt"), th("Základ", true), th("Sadzba", true), th("Odmena / tip", true), th("Tipov", true), th("Spolu", true)], rows, { hasTotal: true }),
+      ]),
+      series[0].points.length >= 2 ? block("Čo z odmien vyrastie", [
+        legendRow(series),
+        lineChartSvg(ctx, series, 140),
+        { text: "Ročná odmena investovaná mesačne (÷ 12) s mesačným zložením výnosu; výnos nie je zaručený. Na osi roky.", style: "muted", margin: [0, 4, 0, 0] },
+      ]) : null,
+    ].filter(Boolean);
+  }
+
+  // Úvod pre klienta v kapitole Navýšenie príjmu (rovnaký obsah ako v kalkulačke).
+  function incomeIntro(ctx, m) {
+    const P = ctx.brand.primary, SOFT = ctx.brand.primarySoft, INK = ctx.brand.ink;
+    const tipov = (n) => (n === 1 ? "tip" : n >= 2 && n <= 4 ? "tipy" : "tipov");
+    const n2 = (x) => new Intl.NumberFormat("sk-SK", { maximumFractionDigits: 2 }).format(x);
+    const tag = (text, fill) => ({ table: { body: [[{ text, bold: true, fontSize: 8, characterSpacing: 0.6, color: "#ffffff", fillColor: fill, margin: [6, 2, 6, 2] }]] }, layout: "noBorders", margin: [0, 0, 0, 4] });
+    const sceneW = (CONTENT_W - 18) / 2;
+    const row = (cells, gap) => ({
+      table: { widths: cells.map(() => "*"), body: [cells] },
+      layout: { hLineWidth: () => 0, vLineWidth: (i) => (i === 0 || i === cells.length ? 0 : gap), vLineColor: () => "#ffffff", paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 },
+    });
+    const chip = (label, value) => ({
+      stack: [{ text: label.toUpperCase(), fontSize: 7, bold: true, color: ctx.brand.muted, characterSpacing: 0.4 }, { text: value, fontSize: 13, bold: true, color: INK, margin: [0, 1, 0, 0] }],
+      fillColor: MOT_TINT, margin: [10, 4, 10, 5],
+    });
+    const card = (title, sub, val, fill, color, strong) => ({
+      fillColor: fill, margin: [6, 9, 6, 10], stack: [
+        { text: title, bold: true, fontSize: 12, color, alignment: "center" },
+        { text: sub, fontSize: 8, color: ctx.brand.inkSecondary, alignment: "center", margin: [0, 2, 0, 6] },
+        centered({ table: { body: [[{ text: val, bold: true, fontSize: 12, color: "#ffffff", fillColor: strong, margin: [10, 3, 10, 4] }]] }, layout: "noBorders" }, "auto"),
+      ],
+    });
+    const range = (t) => (t.to == null ? `${t.from}+ ${tipov(t.from)} ročne` : t.from === t.to ? `${t.from} ${tipov(t.from)} ročne` : `${t.from}–${t.to} ${tipov(t.to)} ročne`);
+
+    const page1 = nn([
+      motTop(ctx, "Vaše kontakty majú hodnotu", { text: "Nemusíte nič predávať.\nStačí povedať: „Poznám niekoho, kto vám pomôže.“" }, true),
+      Object.assign(row([chip("Tipov ročne", String(m.tips)), chip("Odmena ročne", eur(m.yearly)), chip("Mesačne", eur(m.monthly))], 8), { margin: [0, 0, 0, 8] }),
+      { text: "Každý rok sa niekto vo vašom okolí sťahuje, berie hypotéku, predáva byt, čaká dieťa alebo zistí, že nemá poistenie. Tieto rozhovory sa dejú aj bez vás. Rozdiel je len v tom, či z nich budete mať odmenu.",
+        alignment: "center", fontSize: 10.5, color: ctx.brand.inkSecondary, lineHeight: 1.35, margin: [20, 0, 20, 10] },
+      {
+        columns: [
+          { width: sceneW, stack: [tag("DNES", MOT_DANGER), { svg: TIP_SCENES.free, width: sceneW }] },
+          { width: sceneW, stack: [tag("AKO TIPÉR", P), { svg: TIP_SCENES.paid, width: sceneW }] },
+        ],
+        columnGap: 18,
+      },
+      { text: ["Ročne môžete získať navyše ", { text: eur(m.yearly), color: P }], alignment: "center", bold: true, fontSize: 16, color: INK, margin: [0, 12, 0, 2] },
+      isNum(m.raisePct) && m.raisePct > 0.5 ? { text: `To je ako mať o ${eur(m.monthly)} vyšší plat — o ${Math.round(m.raisePct)} % viac, než dnes zarábate.`, alignment: "center", fontSize: 9.5, color: ctx.brand.muted } : null,
+      { stack: [pill("Koľko dostanete za jeden tip", P)], margin: [0, 10, 0, 6] },
+      row((m.top || []).map((t) => card(t.label, `${n2(t.rate)} % · ${t.basisLabel.toLowerCase()} ${eur(t.basis)}`, eur(t.reward), SOFT, P, P)), 10),
+    ]);
+
+    const page2 = nn([
+      motTop(ctx, "Pravidelnosť sa vypláca", { text: ["Čím ", { text: "častejšie", color: P, bold: true }, " tipujete, tým vyššiu odmenu dostanete za ", { text: "každý", color: P, bold: true }, " tip."] }),
+      row((m.tiers || []).map((t) => card(`${t.label}${t.current ? " ✓" : ""}`, range(t), t.bonus > 0 ? `+${Math.round(t.bonus)} %` : "základ", t.current ? SOFT : MOT_TINT, P, t.current ? P : "#9fb0ab")), 10),
+      m.nextTier && m.nextGain > 0.5 ? box({ text: [`Ste na úrovni `, { text: m.tier.label, bold: true }, `. Pri ${m.nextTier.from} ${tipov(m.nextTier.from)} ročne sa dostanete na úroveň `, { text: m.nextTier.label, bold: true }, ` a za rovnaké tipy získate o `, { text: eur(m.nextGain), bold: true }, " viac."], fontSize: 9, color: INK, lineHeight: 1.25 }, SOFT, ctx.brand.hairline, [0, 10, 0, 0]) : null,
+      { stack: [pill("Čo z odmien vyrastie", P)], margin: [0, 12, 0, 4] },
+      { text: [`Keď odmeny ${eur(m.yearly)} ročne pošlete do investície, o ${m.years} ${rokov(m.years)} budete mať `, { text: ` ${eur(m.fv)} `, bold: true, fontSize: 13, color: P, background: SOFT }, "."],
+        alignment: "center", bold: true, fontSize: 10, color: INK, lineHeight: 1.3, margin: [24, 0, 24, 0] },
+      { text: `Z vložených ${eur(m.invested)} pri výnose ${pct(m.invPct)} ročne. Tipy tak môžu zaplatiť sporenie pre deti, mimoriadne splátky hypotéky alebo dôchodok.`, alignment: "center", fontSize: 9, color: ctx.brand.muted, margin: [20, 3, 20, 0] },
+      motDivider(ctx),
+      { text: ["Ľudia neodporúčajú ", { text: "produkty", color: MOT_DANGER, bold: true }, ".\nOdporúčajú ", { text: "ľudí, ktorým veria", color: P, bold: true }, "."], alignment: "center", italics: true, fontSize: 14, color: INK, lineHeight: 1.3 },
+      motDivider(ctx),
+      { text: `${m.tips} ${tipov(m.tips)} ročne = ${eur(m.monthly)} navyše každý mesiac.`, alignment: "center", bold: true, italics: true, fontSize: 13, color: INK, margin: [0, 4, 0, 8] },
+      { text: "Tipér len odovzdá kontakt na človeka, ktorý s tým súhlasí; nič neradí ani nepredáva. Odmena sa vypláca po uzavretí zmluvy (pri poistení po zaplatení poistného). " +
+          "Sadzby a základy sú orientačné a konkrétne podmienky určuje dohoda o spolupráci. Odmena je zdaniteľný príjem — príležitostné príjmy do 500 € ročne sú od dane oslobodené, nad túto sumu sa zdaňujú. Výnos investície nie je zaručený.",
+        alignment: "center", fontSize: 7.5, color: ctx.brand.muted, lineHeight: 1.25 },
+    ]);
+
+    return [
+      { stack: page1 },
+      { stack: page2, pageBreak: "before" },
+      { text: "", pageBreak: "after" },
+    ];
   }
 
   // ---------------------------------------------------------------------------
@@ -1833,6 +1975,7 @@
       if (!active.includes(s.key)) return;
       // Renta a Zabezpečenie s úvodom pre klienta začínajú vždy na novej strane (úvod zaberá celú stranu).
       const hasIntro = s.key === "housing" ? !!(data.housing && data.housing.mortgage && data.housing.mortgage.motivation)
+        : s.key === "incomeScaling" ? !!(data.incomeScaling && data.incomeScaling.referral && data.incomeScaling.referral.motivation)
         : ["retirement", "security", "children"].includes(s.key) && data[s.key] && data[s.key].motivation;
       const mode = hasIntro && breaks !== "never" ? "always" : breaks;
       content.push(...h1(ctx, num++, L.modules[s.key], null, mode));

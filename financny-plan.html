@@ -233,9 +233,12 @@
         if (sec && sec.premiumBudget && sec.premiumBudget.proposed != null) parts.push(`nové životné poistenie ${eur(sec.premiumBudget.proposed)} / mes.`);
         return parts.join(" · ") || (ef ? "finančná rezerva" : "kalkulačka nevyplnená");
       },
-      incomeScaling: () => "kalkulačku pripravujeme",
+      incomeScaling: () => {
+        const m = r.incomeScaling && r.incomeScaling.referral;
+        return m ? `${m.tips} tipov ročne · ${eur(m.yearly)} / rok (${m.tier.label})` : "kalkulačka nevyplnená";
+      },
     };
-    const HREF = { housing: "hypotekarna-kalkulacka.html?plan=1", children: "detska-kalkulacka.html?plan=1", retirement: "dochodkova-kalkulacka.html?plan=1", investments: "index.html?plan=1", security: "zivotna-kalkulacka.html?plan=1" };
+    const HREF = { incomeScaling: "prijmova-kalkulacka.html?plan=1", housing: "hypotekarna-kalkulacka.html?plan=1", children: "detska-kalkulacka.html?plan=1", retirement: "dochodkova-kalkulacka.html?plan=1", investments: "index.html?plan=1", security: "zivotna-kalkulacka.html?plan=1" };
     const goals = r.clientGoals || [];
     const notAdded = PS.GOAL_KEYS.filter((k) => !goals.some((g) => g.key === k)).map((k) => MODULE_LABEL[k]);
     $("#areas").innerHTML = (goals.length
