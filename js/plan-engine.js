@@ -19,9 +19,9 @@
   const CURRENT_YEAR = new Date().getFullYear();
 
   const UNIT = { "€": "lump_sum", "€ / mes.": "monthly", "€ / deň": "daily" };
-  const GOAL_ORDER = ["housing", "retirement", "investments", "security", "incomeScaling"];
-  const GOAL_TITLES = { housing: "Bývanie a reality", retirement: "Renta", investments: "Sporenie a investície", security: "Zabezpečenie", incomeScaling: "Navýšenie príjmu" };
-  const HAS_CALCULATOR = { retirement: true, investments: true, security: true };
+  const GOAL_ORDER = ["housing", "retirement", "investments", "children", "security", "incomeScaling"];
+  const GOAL_TITLES = { housing: "Bývanie a reality", retirement: "Renta", investments: "Sporenie a investície", children: "Sporenie pre deti", security: "Zabezpečenie", incomeScaling: "Navýšenie príjmu" };
+  const HAS_CALCULATOR = { retirement: true, investments: true, security: true, children: true };
   const LOAN_KIND = { mortgage: "Hypotéka", consumer: "Spotrebný úver", car: "Úver na auto / leasing", other: "Úver" };
 
   // Počet dní do najbližšieho výročia zmluvy (podľa dátumu začiatku) od dátumu plánu.
@@ -58,6 +58,7 @@
     const inv = pick("investments");
     const ret = pick("retirement");
     const sec = pick("security");
+    const kids = pick("children"); // len pri deťoch v domácnosti (isGoalSelected)
     const retAll = raw("retirement"); // dôchodkové účty patria do majetku aj bez cieľa Renta
 
     // ---------------------------------------------------------------- Cashflow
@@ -79,13 +80,14 @@
     const coveredByNewInvestment = s.links.investmentForRetirement ? Math.min(retirementExtraFull, newInvestment) : 0;
     const retirementExtra = retirementExtraFull - coveredByNewInvestment;
     const proposedPremium = sec && num(sec.premium) > 0 ? num(sec.premium) : null;
+    const kidsMonthly = kids ? (kids.kids || []).reduce((t, k) => t + num(k.monthly), 0) : 0;
 
-    const changed = newInvestment > 0 || retirementExtra > 0 || proposedPremium != null;
+    const changed = newInvestment > 0 || retirementExtra > 0 || proposedPremium != null || kidsMonthly > 0;
     const after = changed
       ? cashflow(netIncome, num(f.livingExpenses), debtPayments,
           // Návrh z kalkulačky nahrádza súčasné životné poistenie; ostatné zmluvy ostávajú.
           (proposedPremium != null ? proposedPremium : lifePrem) + otherPrem,
-          num(f.currentInvesting) + newInvestment + retirementExtra)
+          num(f.currentInvesting) + newInvestment + retirementExtra + kidsMonthly)
       : undefined;
 
     // ---------------------------------------------------------------- Majetok
@@ -196,6 +198,16 @@
           detail: `Priebežné náklady ${String(inv.costPct).replace(".", ",")} % ročne znížia výnos o ${eur(inv.costs)} za celú dobu.` });
       }
     }
+    if (kids) {
+      (kids.kids || []).filter((k) => num(k.monthly) > 0 || num(k.principal) > 0).forEach((k) => {
+        const short = k.requiredMonthly != null && k.requiredMonthly > num(k.monthly) + 0.5;
+        actions.push({ priority: short ? "medium" : "low", module: "children",
+          title: k.name ? `Založiť sporenie pre deti — ${k.name}` : "Založiť sporenie pre dieťa",
+          detail: `${num(k.principal) > 0 ? `${eur(k.principal)} jednorazovo, ` : ""}${eur(k.monthly)} mesačne do ${k.targetAge} rokov (${kids.strategyLabel.toLowerCase()} stratégia); odhadovaná hodnota ${eur(k.finalValue)}.` +
+            (short ? ` Na cieľ ${eur(k.target)} (${String(k.purpose).toLowerCase()}) treba ${eur(k.requiredMonthly)} mesačne.` : ""),
+          monthlyImpact: num(k.monthly) > 0 ? -round(k.monthly) : undefined });
+      });
+    }
     // Existujúce zmluvy: chýbajúce poistenie k hypotéke a blížiace sa výročia.
     const contracts = store.activeContracts(s);
     if (selected("security")) {
@@ -221,7 +233,7 @@
     });
 
     // ---------------------------------------------------------------- Stav modulov
-    const status = { investments: !!inv, retirement: !!ret, security: !!sec, housing: false, incomeScaling: false };
+    const status = { investments: !!inv, retirement: !!ret, security: !!sec, children: !!kids, housing: false, incomeScaling: false };
     const clientGoals = GOAL_ORDER.filter(selected).map((k) => ({
       key: k,
       title: GOAL_TITLES[k],
@@ -282,6 +294,11 @@
           };
         }) : [],
       },
+      children: kids ? {
+        strategyLabel: kids.strategyLabel, inflationPct: kids.inflation,
+        kids: (kids.kids || []).map((k) => ({ ...k })),
+        motivation: kids.motivation || undefined, // úvod pre klienta z detskej kalkulačky
+      } : undefined,
       retirement: ret ? {
         currentAge: ret.age, retirementAge: ret.retAge, payoutEndAge: ret.endAge,
         targetMonthlyToday: round(ret.target),

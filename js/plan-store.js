@@ -220,6 +220,22 @@
   }
 
   const SHARED = {
+    // Sporenie pre deti: deti sa spravujú v profile (zoznam), do kalkulačky idú len meno a vek.
+    children: {
+      toCalc: (s) => ({
+        profileKids: (s.household.children || []).map((c) => ({ firstName: c.firstName || "", age: c.birthDate ? ageFrom(c.birthDate, s.meta.date) : null })),
+      }),
+      // Mená detí zadané v kalkulačke sa zapíšu do profilu; dieťa pridané v kalkulačke pribudne aj v Domácnosti.
+      // Odoberanie detí ostáva len v profile (poradie detí používajú aj zmluvy a životná kalkulačka).
+      fromCalc: (s, v) => {
+        (v.kids || []).forEach((k, i) => {
+          const name = String(k.name || "").trim();
+          const ch = s.household.children[i];
+          if (ch) ch.firstName = name;
+          else s.household.children.push({ firstName: name, birthDate: "" });
+        });
+      },
+    },
     investments: {
       toCalc: () => ({}),
       fromCalc: () => {},
@@ -267,6 +283,7 @@
   };
 
   const SHARED_LABELS = {
+    children: "deti (meno a vek)",
     retirement: "vek, dôchodkový vek, hrubá mzda, odpracované roky, inflácia",
     security: "vek, príjem, úvery, rodina, živiteľ a krytie z existujúcich zmlúv",
     investments: "",
@@ -284,8 +301,11 @@
 
   // Cieľ je pridaný, ak ho poradca pridal; ak o ňom ešte nerozhodol,
   // berie sa za pridaný, keď je vyplnená jeho kalkulačka.
-  const GOAL_KEYS = ["housing", "retirement", "investments", "security", "incomeScaling"];
+  const GOAL_KEYS = ["housing", "retirement", "investments", "children", "security", "incomeScaling"];
+  // Cieľ „Sporenie pre deti“ existuje len pre klientov s deťmi v domácnosti.
+  const hasChildren = (s) => (s.household.children || []).length > 0;
   function isGoalSelected(s, key) {
+    if (key === "children" && !hasChildren(s)) return false;
     const g = s.goals && s.goals[key];
     if (g && typeof g.selected === "boolean") return g.selected;
     // Existujúce poistné zmluvy patria pod cieľ Zabezpečenie.
@@ -361,7 +381,7 @@
   global.PlanStore = {
     KEY, load, save, update, reset, replace, emptyState,
     getModule, initialInputs, saveModule, clearModule, isPlanMode, onChange, mountBar, exportJson,
-    GOAL_KEYS, isGoalSelected, setGoal,
+    GOAL_KEYS, isGoalSelected, setGoal, hasChildren,
     CONTRACT_TYPES, RIDERS_ADULT, RIDERS_CHILD, contractType, contractRiders, contractMonthly, isLifeContract,
     activeContracts, lifePremiums, otherPremiums, contractCover, insuredLabel,
     netFromGross, ageFrom, clientAge, clientNet, clientName, activeLoans, loansTotal, loanPayments, householdNet, hasProfile,

@@ -163,7 +163,7 @@
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const fmtDate = (iso) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ""); return m ? `${+m[3]}. ${+m[2]}. ${m[1]}` : ""; };
 
-  const MODULE_LABEL = { housing: "Bývanie a reality", investments: "Sporenie a investície", security: "Zabezpečenie", retirement: "Renta", incomeScaling: "Navýšenie príjmu", general: "Všeobecné" };
+  const MODULE_LABEL = { housing: "Bývanie a reality", investments: "Sporenie a investície", children: "Sporenie pre deti", security: "Zabezpečenie", retirement: "Renta", incomeScaling: "Navýšenie príjmu", general: "Všeobecné" };
   const PRIO = { high: ["Vysoká", "#d03b3b"], medium: ["Stredná", "#e0a020"], low: ["Nízka", "#b7c1be"] };
 
   let state, built;
@@ -217,6 +217,10 @@
       housing: () => (active.includes("housing") ? "hypotéky z profilu" : "kalkulačku pripravujeme"),
       retirement: () => (ret ? `cieľ ${eur(ret.targetMonthlyToday)} · očakávané ${eur(Object.values(ret.sources).reduce((a, b) => a + (b || 0), 0))} / mes.` : "kalkulačka nevyplnená"),
       investments: () => (inv && inv.accounts.length ? `${inv.accounts.length} ${inv.accounts.length === 1 ? "účet" : "účty"} · vklady ${eur(inv.accounts.reduce((t, a) => t + a.monthlyContribution + (a.employerContribution || 0), 0))} / mes.` : "kalkulačka nevyplnená"),
+      children: () => {
+        const kids = (r.children && r.children.kids) || [];
+        return kids.length ? kids.map((k) => `${k.name || "dieťa"} ${eur(k.monthly)} / mes.`).join(" · ") : "kalkulačka nevyplnená";
+      },
       security: () => {
         const parts = [];
         if (sec && sec.people.length) parts.push(`${sec.people.length} ${sec.people.length === 1 ? "osoba" : "osoby"}`);
@@ -226,7 +230,7 @@
       },
       incomeScaling: () => "kalkulačku pripravujeme",
     };
-    const HREF = { retirement: "dochodkova-kalkulacka.html?plan=1", investments: "index.html?plan=1", security: "zivotna-kalkulacka.html?plan=1" };
+    const HREF = { children: "detska-kalkulacka.html?plan=1", retirement: "dochodkova-kalkulacka.html?plan=1", investments: "index.html?plan=1", security: "zivotna-kalkulacka.html?plan=1" };
     const goals = r.clientGoals || [];
     const notAdded = PS.GOAL_KEYS.filter((k) => !goals.some((g) => g.key === k)).map((k) => MODULE_LABEL[k]);
     $("#areas").innerHTML = (goals.length

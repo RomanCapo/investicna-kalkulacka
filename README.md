@@ -40,6 +40,17 @@ Jednoduchá single-page kalkulačka (React cez CDN + Tailwind CSS, žiadny build
 - Potreba rodiny pri úmrtí živiteľa, rozpočet na poistné (5–10 % netto), porovnanie s aktuálnou zmluvou
 - Režim pre dieťa, export do PDF
 
+## Sporenie pre deti
+
+`detska-kalkulacka.html` — pravidelné investovanie pre deti v rovnakom dizajne.
+
+- Úvod pre klienta (dá sa skryť): „Najlepší štart do života“ s ilustráciami (bez plánu vs. s plánom), **Ponožka vs. Investícia** pri rovnakých vkladoch a na druhej strane **Čas je najväčší vklad** — cena čakania (začať dnes / o 3 / o 6 rokov), potrebný vklad na cieľ a tri stratégie. V PDF z kalkulačky aj vo finančnom pláne tvorí prvé dve strany kapitoly Sporenie pre deti
+- Viac detí naraz, každé s vlastným menom (záložky podľa mena; po „+ Pridať dieťa“ sa hneď píše meno), vekom, vkladmi a cieľom; sporenie do zvoleného veku
+- Tri stratégie ako v Exceli (konzervatívna, zmiešaná, dynamická — výnosy sa dajú upraviť) a porovnanie so sporením bez zhodnotenia
+- Cieľ (štart do života, štúdium, prvé bývanie, auto) v dnešných cenách a potrebný mesačný vklad pri každej stratégii
+- Graf rastu účtu podľa veku dieťaťa, cena čakania, export do PDF
+- V pláne sa cieľ **Sporenie pre deti** zobrazí len vtedy, keď má klient v Domácnosti pridané dieťa; meno a vek (z dátumu narodenia) sa berú z profilu, meno upravené v kalkulačke a dieťa pridané v kalkulačke sa zapíšu späť do Domácnosti (odoberá sa len v profile), vklady idú do cashflow po pláne a do akčného plánu
+
 ## Finančný plán (prepojenie kalkulačiek)
 
 Vstupný bod je `plan.html`:
@@ -61,7 +72,7 @@ Súbory:
 
 ## Vloženie na web
 
-1. Nahrajte na hosting (alebo GitHub Pages) súbory `plan.html`, `financny-plan.html`, `index.html`, `dochodkova-kalkulacka.html`, `zivotna-kalkulacka.html` a celý priečinok `js/` — spolu, v rovnakej štruktúre.
+1. Nahrajte na hosting (alebo GitHub Pages) súbory `plan.html`, `financny-plan.html`, `index.html`, `dochodkova-kalkulacka.html`, `zivotna-kalkulacka.html`, `detska-kalkulacka.html` a celý priečinok `js/` — spolu, v rovnakej štruktúre.
 2. Na stránku (WordPress: blok „Vlastné HTML“) vložte kód nižšie a upravte adresu v `src`. Iframe sa sám prispôsobí výške obsahu, pri prechode medzi plánom, kalkulačkami a súhrnom posunie stránku na začiatok plánu a odkazy na kroky (#ciele…) posunú stránku na správne miesto. `headerOffset` = výška prilepenej hlavičky webu.
 
 ```html
@@ -88,4 +99,4 @@ Súbory:
 
 ## Spustenie
 
-Stačí otvoriť `plan.html` (finančný plán) alebo samostatnú kalkulačku `index.html`, `dochodkova-kalkulacka.html`, `zivotna-kalkulacka.html` v prehliadači — nie je potrebný žiadny build krok.
+Stačí otvoriť `plan.html` (finančný plán) alebo samostatnú kalkulačku `index.html`, `dochodkova-kalkulacka.html`, `zivotna-kalkulacka.html`, `detska-kalkulacka.html` v prehliadači — nie je potrebný žiadny build krok.

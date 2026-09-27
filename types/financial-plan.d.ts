@@ -3,7 +3,7 @@
 // profile plus the computed results. Amounts are EUR per month unless the name
 // says otherwise; percentages are stored as percent (3.9 = 3,9 %).
 
-export type ModuleKey = "housing" | "investments" | "security" | "retirement" | "incomeScaling";
+export type ModuleKey = "housing" | "investments" | "children" | "security" | "retirement" | "incomeScaling";
 
 export interface FinancialPlanReport {
   meta: {
@@ -39,6 +39,7 @@ export interface FinancialPlanReport {
   // is left out of the PDF entirely.
   housing?: HousingSection;
   investments?: InvestmentSection;
+  children?: ChildrenSection;     // only when the household has children
   security?: SecuritySection;
   retirement?: RetirementSection;
   incomeScaling?: IncomeScalingSection;
@@ -160,6 +161,32 @@ export interface Goal {
 }
 
 // ---------------------------------------------------------------- Security
+// Computed in detska-kalkulacka.html (summarizeChildren); one entry per child from the profile.
+export interface ChildrenSection {
+  strategyLabel: string;           // Konzervatívna / Zmiešaná / Dynamická
+  inflationPct: number;
+  kids: ChildSavings[];
+  motivation?: ChildrenMotivation; // client-facing intro pages (first child)
+}
+
+export interface ChildSavings {
+  name: string; age: number; targetAge: number; years: number; purpose: string;
+  principal: number; monthly: number; invested: number;
+  target: number;                  // goal in today's money, 0 = none
+  finalValue: number; realValue: number; sockValue: number; returnPct: number;
+  requiredMonthly: number | null;  // monthly saving needed for the target
+  yearly: { year: number; age: number; invested: number; value: number }[];
+}
+
+export interface ChildrenMotivation {
+  name: string; age: number; targetAge: number; years: number; monthly: number; principal: number; weekly: number;
+  invested: number; sockValue: number; value: number; realValue: number; diff: number;
+  strategyLabel: string; pct: number; inflation: number;
+  delays: { d: number; value: number }[]; perYearDelay: number | null;
+  purpose: string; target: number; need: number | null; sockNeed: number | null;
+  strategies: { label: string; pct: number; value: number }[];
+}
+
 export interface SecuritySection {
   emergencyFund?: { current: number; target: number; targetMonths: number; monthlyEssentialExpenses: number };
   premiumBudget?: { min: number; max: number; current: number; proposed?: number };

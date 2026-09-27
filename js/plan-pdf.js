@@ -55,6 +55,7 @@
     modules: {
       housing: "Bývanie a reality",
       investments: "Sporenie a investície",
+      children: "Sporenie pre deti",
       security: "Zabezpečenie",
       retirement: "Renta",
       incomeScaling: "Navýšenie príjmu",
@@ -150,6 +151,11 @@
       key: "investments",
       isActive: (s) => !!s && (hasItems(s.accounts) || hasItems(s.goals)),
       render: renderInvestments,
+    },
+    {
+      key: "children",
+      isActive: (s) => !!s && (s.kids || []).some((k) => k.monthly > 0 || k.principal > 0),
+      render: renderChildren,
     },
     {
       key: "security",
@@ -1291,7 +1297,7 @@
       ], alignment: "center", italics: true, fontSize: 13, color: INK, lineHeight: 1.3 },
       motDivider(ctx),
       { text: "Najlacnejšie poistenie je to, ktoré uzavriete, kým ste zdravý.", alignment: "center", bold: true, italics: true, fontSize: 12, color: INK, margin: [0, 4, 0, 8] },
-      { text: "Odporúčané sumy sú minimálne a vychádzajú z čistého príjmu, úverov a dávok Sociálnej poisťovne (nemocenská 55 % hrubej mzdy, invalidný dôchodok podľa odpracovaných rokov a percenta invalidity). " +
+      { text: "Odporúčané sumy sú minimálne a vychádzajú z čistého príjmu, úverov a dávok Sociálnej poisťovne (nemocenská 55 % denného vymeriavacieho základu, invalidný dôchodok podľa odpracovaných rokov a percenta invalidity). " +
           "Strata do dôchodku = mesačný výpadok × 12 × roky do dôchodku, v dnešných cenách. Ilustratívny prepočet, nie je ponukou poistenia.",
         alignment: "center", fontSize: 7.5, color: ctx.brand.muted, lineHeight: 1.25 },
     ]);
@@ -1302,6 +1308,199 @@
       { stack: page2, pageBreak: "before" },
       { text: "", pageBreak: "after" },
     ];
+  }
+
+  // Ilustrácie úvodu k sporeniu pre deti (rovnaké ako v detskej kalkulačke).
+  const kidSceneSvgs = (font) => ({
+    noPlan: `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200">
+    <rect width="320" height="200" fill="#dde3e1"/>
+    <ellipse cx="236" cy="40" rx="40" ry="16" fill="#9fb0ab"/><ellipse cx="206" cy="46" rx="26" ry="13" fill="#9fb0ab"/><ellipse cx="262" cy="48" rx="24" ry="12" fill="#9fb0ab"/>
+    ${[196, 214, 232, 250, 268].map((x, i) => `<line x1="${x}" y1="${64 + (i % 2) * 6}" x2="${x - 6}" y2="${82 + (i % 2) * 6}" stroke="#7f928d" stroke-width="2.5" stroke-linecap="round"/>`).join("")}
+    <rect x="24" y="92" width="64" height="60" fill="#b9c4c0"/><rect x="34" y="104" width="14" height="14" fill="#dde3e1"/><rect x="62" y="104" width="14" height="14" fill="#dde3e1"/><rect x="48" y="128" width="16" height="24" fill="#8a9893"/>
+    <path d="M18 94 L56 66 L94 94 Z" fill="#8a9893"/>
+    <circle cx="160" cy="70" r="13" fill="#e6b48c"/>
+    <path d="M147 66 Q160 52 173 66 Z" fill="#6b4f36"/>
+    <rect x="142" y="84" width="16" height="46" rx="6" fill="#6b7b77"/>
+    <rect x="146" y="84" width="28" height="50" rx="11" fill="#9fb0ab"/>
+    <rect x="148" y="132" width="10" height="38" rx="3" fill="#465753"/><rect x="162" y="132" width="10" height="38" rx="3" fill="#465753"/>
+    <rect x="176" y="92" width="58" height="60" rx="3" fill="#ffffff" transform="rotate(6 205 122)"/>
+    <text x="206" y="113" text-anchor="middle" font-family="${font}" font-size="12" font-weight="700" fill="#c23b32" transform="rotate(6 205 122)">ÚVER</text>
+    ${[122, 130, 138].map((y) => `<rect x="188" y="${y}" width="34" height="3" fill="#b9c4c0" transform="rotate(6 205 122)"/>`).join("")}
+    <path d="M172 100 L184 108" stroke="#9fb0ab" stroke-width="7" stroke-linecap="round"/>
+    <rect x="0" y="170" width="320" height="30" fill="#465753"/>
+    <text x="160" y="190" text-anchor="middle" font-family="${font}" font-size="14" font-weight="700" fill="#ffffff">18 rokov a prvý úver</text>
+  </svg>`,
+    plan: `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200">
+    <defs><linearGradient id="kidsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d5eeea"/><stop offset="1" stop-color="#fbf4e4"/></linearGradient></defs>
+    <rect width="320" height="200" fill="url(#kidsky)"/>
+    <circle cx="270" cy="42" r="20" fill="#e3a33b"/>
+    ${[[40, 30, "#c23b32"], [80, 52, "#e3a33b"], [120, 24, "#2a78d6"], [210, 30, "#1baf7a"], [236, 76, "#c23b32"], [60, 84, "#1baf7a"]].map(([x, y, c], i) => `<rect x="${x}" y="${y}" width="7" height="4" rx="1" fill="${c}" transform="rotate(${i * 35} ${x} ${y})"/>`).join("")}
+    <rect x="210" y="98" width="76" height="72" fill="#ffffff"/><path d="M200 100 L248 62 L296 100 Z" fill="#0f6b5c"/>
+    <rect x="220" y="112" width="18" height="18" fill="#d5eeea"/><rect x="258" y="112" width="18" height="18" fill="#d5eeea"/><rect x="238" y="140" width="20" height="30" fill="#c96f3b"/>
+    <circle cx="140" cy="72" r="13" fill="#e6b48c"/>
+    <path d="M124 60 L140 52 L156 60 L140 68 Z" fill="#10231f"/><rect x="134" y="60" width="12" height="6" fill="#10231f"/>
+    <line x1="156" y1="60" x2="158" y2="72" stroke="#e3a33b" stroke-width="2"/>
+    <rect x="126" y="86" width="28" height="48" rx="11" fill="#0f6b5c"/>
+    <rect x="128" y="132" width="10" height="38" rx="3" fill="#10231f"/><rect x="142" y="132" width="10" height="38" rx="3" fill="#10231f"/>
+    <path d="M152 96 L172 80" stroke="#0f6b5c" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="178" cy="74" r="7" fill="none" stroke="#e3a33b" stroke-width="3.5"/>
+    <path d="M183 79 L194 90 M189 85 L185 89 M192 88 L188 92" stroke="#e3a33b" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M128 96 L112 110" stroke="#0f6b5c" stroke-width="7" stroke-linecap="round"/>
+    <rect x="0" y="170" width="320" height="30" fill="#efe1c2"/>
+    <text x="160" y="190" text-anchor="middle" font-family="${font}" font-size="14" font-weight="700" fill="#10231f">18 rokov a vlastný štart</text>
+  </svg>`,
+  });
+  const KID_SCENES = kidSceneSvgs("Roboto");
+
+  // ---------------------------------------------------------------------------
+  // Sporenie pre deti: úvod pre klienta (2 strany) + prepočet pre každé dieťa.
+  // ---------------------------------------------------------------------------
+  function childrenIntro(ctx, m) {
+    const P = ctx.brand.primary, SOFT = ctx.brand.primarySoft, INK = ctx.brand.ink;
+    const who = m.name || "vaše dieťa";
+    const tag = (text, fill) => ({ table: { body: [[{ text, bold: true, fontSize: 8, characterSpacing: 0.6, color: "#ffffff", fillColor: fill, margin: [6, 2, 6, 2] }]] }, layout: "noBorders", margin: [0, 0, 0, 4] });
+    const sceneW = (CONTENT_W - 18) / 2;
+    const chip = (label, value) => ({
+      stack: [{ text: label.toUpperCase(), fontSize: 7, bold: true, color: ctx.brand.muted, characterSpacing: 0.4 }, { text: value, fontSize: 13, bold: true, color: INK, margin: [0, 1, 0, 0] }],
+      fillColor: MOT_TINT, margin: [10, 4, 10, 5],
+    });
+    const chips = (items) => ({
+      table: { widths: items.map(() => "*"), body: [items] },
+      layout: { hLineWidth: () => 0, vLineWidth: (i) => (i === 0 || i === items.length ? 0 : 8), vLineColor: () => "#ffffff", paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 },
+      margin: [0, 0, 0, 8],
+    });
+    const card = (title, sub, amount, note, total, accent, soft) => ({
+      table: {
+        widths: ["*"],
+        body: [
+          [{ fillColor: soft, margin: [6, 5, 6, 5], stack: [
+            { text: title, bold: true, fontSize: 15, color: accent, alignment: "center" },
+            { text: sub, italics: true, fontSize: 8.5, color: ctx.brand.inkSecondary, alignment: "center", margin: [0, 2, 0, 0] },
+          ] }],
+          [{ margin: [6, 5, 6, 6], stack: [
+            { text: eur(amount), bold: true, fontSize: 17, color: INK, alignment: "center" },
+            { text: note, bold: true, fontSize: 8, color: ctx.brand.muted, alignment: "center" },
+            { text: "Vložím", fontSize: 8.5, color: ctx.brand.inkSecondary, alignment: "center", margin: [0, 3, 0, 0] },
+            { text: eur(total), bold: true, fontSize: 11.5, color: INK, alignment: "center" },
+          ] }],
+        ],
+      },
+      layout: { hLineWidth: (i) => (i === 1 ? 0 : 1.2), vLineWidth: () => 1.2, hLineColor: () => accent, vLineColor: () => accent },
+    });
+
+    const page1 = nn([
+      motTop(ctx, "Najlepší štart do života", { text: "Deťom nemôžeme dať všetko.\nAle môžeme im dať náskok." }, true),
+      chips([chip("Dieťa", m.name || "Vaše dieťa"), chip("Vek dnes", `${m.age} ${rokov(m.age)}`), chip(`Do ${m.targetAge} rokov`, `${m.years} ${rokov(m.years)}`)]),
+      { text: `Raz príde deň, keď sa ${who} postaví na vlastné nohy — štúdium, prvý nájom, prvé auto. Otázka nie je, či ten deň príde. Otázka je, či doň vykročí s úverom, alebo s vlastným kapitálom.`,
+        alignment: "center", fontSize: 10.5, color: ctx.brand.inkSecondary, lineHeight: 1.35, margin: [20, 0, 20, 10] },
+      {
+        columns: [
+          { width: sceneW, stack: [tag("BEZ PLÁNU", MOT_DANGER), { svg: KID_SCENES.noPlan, width: sceneW }] },
+          { width: sceneW, stack: [tag("S PLÁNOM", P), { svg: KID_SCENES.plan, width: sceneW }] },
+        ],
+        columnGap: 18,
+      },
+      { text: [`O ${m.years} ${rokov(m.years)} môže mať ${who} na účte `, { text: eur(m.value), color: P }], alignment: "center", bold: true, fontSize: 16, color: INK, margin: [0, 12, 0, 2] },
+      { text: `Stačí ${eur(m.monthly)} mesačne${m.principal > 0 ? ` a jednorazovo ${eur(m.principal)}` : ""} — to je ${eur(m.weekly)} týždenne.`, alignment: "center", fontSize: 9.5, color: ctx.brand.muted },
+      {
+        columns: [
+          { width: "*", stack: [card("Ponožka", "Odkladám bez zhodnotenia", m.sockValue, `v ${m.targetAge} rokoch`, m.invested, MOT_DANGER, MOT_DANGER_SOFT)] },
+          { width: 50, text: "ALEBO", bold: true, fontSize: 8.5, characterSpacing: 1, color: ctx.brand.muted, alignment: "center", margin: [0, 50, 0, 0] },
+          { width: "*", stack: [card("Investícia", `${m.strategyLabel} stratégia, ${pct(m.pct)} ročne`, m.value, `v ${m.targetAge} rokoch`, m.invested, P, SOFT)] },
+        ],
+        columnGap: 6,
+        margin: [30, 10, 30, 6],
+      },
+      m.diff > 0.5 ? { text: ["Rovnaké vklady, o ", { text: eur(m.diff), color: P }, " viac.\nRozdiel dopracoval čas, nie vy."], alignment: "center", bold: true, fontSize: 11.5, color: INK, lineHeight: 1.25 } : null,
+    ]);
+
+    const max = Math.max(1, ...m.delays.map((d) => d.value));
+    const barW = 240;
+    const delayRows = m.delays.map((d, i) => [
+      { text: d.d === 0 ? "Začneme dnes" : `O ${d.d} ${rokov(d.d)} neskôr`, fontSize: 8.5, bold: true, color: ctx.brand.inkSecondary, margin: [0, 1, 0, 0] },
+      { canvas: [{ type: "rect", x: 0, y: 2, w: Math.max(6, (d.value / max) * barW), h: 8, r: 4, color: i === 0 ? P : MOT_DANGER }] },
+      { text: eur(d.value), fontSize: 9.5, bold: true, color: INK, alignment: "right" },
+    ]);
+    const stratCard = (s) => ({
+      fillColor: SOFT, margin: [6, 9, 6, 10], stack: [
+        { text: s.label, bold: true, fontSize: 13, color: P, alignment: "center" },
+        { text: `${pct(s.pct)} ročne`, fontSize: 8.5, color: ctx.brand.inkSecondary, alignment: "center", margin: [0, 2, 0, 6] },
+        centered({ table: { body: [[{ text: eur(s.value), bold: true, fontSize: 12, color: "#ffffff", fillColor: P, margin: [10, 3, 10, 4] }]] }, layout: "noBorders" }, "auto"),
+      ],
+    });
+
+    const page2 = nn([
+      motTop(ctx, "Čas je najväčší vklad", { text: ["Každý rok, ktorý necháte ujsť, musíte neskôr ", { text: "dobehnúť vyššími vkladmi", color: MOT_DANGER, bold: true }, ". Kto začne ", { text: "hneď", color: P, bold: true }, ", nechá pracovať čas."] }),
+      centered({
+        table: { widths: [100, barW, "*"], body: delayRows },
+        layout: { hLineWidth: () => 0, vLineWidth: () => 0, paddingTop: () => 2, paddingBottom: () => 2, paddingLeft: () => 4, paddingRight: () => 4 },
+        margin: [0, 4, 0, 4],
+      }, 400),
+      m.perYearDelay > 0.5 ? { text: ["Každý rok čakania stojí ", { text: eur(m.perYearDelay), color: MOT_DANGER }], alignment: "center", bold: true, fontSize: 16, color: INK, margin: [0, 4, 0, 0] } : null,
+      { text: `Pri rovnakom vklade ${eur(m.monthly)} mesačne a výnose ${pct(m.pct)} ročne.`, alignment: "center", fontSize: 8.5, color: ctx.brand.muted, margin: [0, 2, 0, 0] },
+      m.target > 0 ? { stack: [pill(`Cieľ: ${m.purpose}`, P)], margin: [0, 10, 0, 4] } : null,
+      m.target > 0 ? { text: [
+        `Na ${eur(m.target)} v dnešných peniazoch do ${m.targetAge} rokov stačí odkladať `,
+        { text: ` ${eur(m.need)} `, bold: true, fontSize: 13, color: P, background: SOFT },
+        " mesačne",
+        m.sockNeed != null && m.sockNeed > (m.need || 0) + 0.5 ? ` — do ponožky by to bolo ${eur(m.sockNeed)}.` : ".",
+      ], alignment: "center", bold: true, fontSize: 10, color: INK, lineHeight: 1.3, margin: [24, 0, 24, 0] } : null,
+      {
+        table: { widths: m.strategies.map(() => "*"), body: [m.strategies.map(stratCard)] },
+        layout: { hLineWidth: () => 0, vLineWidth: (i) => (i === 0 || i === m.strategies.length ? 0 : 10), vLineColor: () => "#ffffff", paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 },
+        margin: [0, 12, 0, 0],
+      },
+      motDivider(ctx),
+      { text: [
+        "Dieťa si nezapamätá ", { text: "každú hračku", color: MOT_DANGER, bold: true }, ".\n",
+        "Zapamätá si, že ste mysleli na jeho ", { text: "budúcnosť", color: P, bold: true }, ".",
+      ], alignment: "center", italics: true, fontSize: 14, color: INK, lineHeight: 1.3 },
+      motDivider(ctx),
+      { text: "Najlepší čas začať bol pri narodení. Druhý najlepší je dnes.", alignment: "center", bold: true, italics: true, fontSize: 13, color: INK, margin: [0, 4, 0, 8] },
+      { text: `Výnos je očakávané ročné zhodnotenie po nákladoch, vklad na začiatku mesiaca, mesačné zloženie. Cieľová suma je v dnešných cenách (inflácia ${pct(m.inflation)} ročne). ` +
+          "Hodnota investície môže kolísať a minulé výnosy nie sú zárukou budúcich. Ilustratívny prepočet, nie je investičné odporúčanie.",
+        alignment: "center", fontSize: 7.5, color: ctx.brand.muted, lineHeight: 1.25 },
+    ]);
+
+    return [
+      { stack: page1 },
+      { stack: page2, pageBreak: "before" },
+      { text: "", pageBreak: "after" },
+    ];
+  }
+
+  function renderChildren(ctx, s) {
+    const out = [];
+    if (s.motivation) out.push(...childrenIntro(ctx, s.motivation));
+    const kids = (s.kids || []).filter((k) => k.monthly > 0 || k.principal > 0);
+    if (kids.length > 1) {
+      const rows = kids.map((k) => [
+        td(k.name || "Dieťa", { bold: true }), tdNum(`${k.age} → ${k.targetAge}`), tdNum(eur(k.monthly)),
+        tdNum(eur(k.invested)), tdNum(eur(k.finalValue), { bold: true }),
+      ]);
+      rows.push([td("Spolu", { bold: true }), tdNum(""), tdNum(eur(sum(kids, (k) => k.monthly)), { bold: true }), tdNum(eur(sum(kids, (k) => k.invested)), { bold: true }), tdNum(eur(sum(kids, (k) => k.finalValue)), { bold: true })]);
+      out.push(block("Prehľad sporenia pre deti", [dataTable(ctx, ["*", 60, 70, 80, 90],
+        [th("Dieťa"), th("Vek", true), th("Vklad / mes.", true), th("Vložené", true), th("Hodnota", true)], rows, { hasTotal: true })]));
+    }
+    kids.forEach((k) => {
+      const series = [
+        { label: "Hodnota účtu", color: SERIES[2], points: (k.yearly || []).map((p) => ({ x: p.age, y: p.value })) },
+        { label: "Vložené prostriedky", color: SERIES[0], points: (k.yearly || []).map((p) => ({ x: p.age, y: p.invested })) },
+      ];
+      const short = k.requiredMonthly != null && k.requiredMonthly > k.monthly + 0.5;
+      out.push(block(`${k.name || "Dieťa"} — ${String(k.purpose || "sporenie").toLowerCase()}`, nn([
+        tiles(nn([
+          tile(ctx, `Hodnota v ${k.targetAge} rokoch`, eur(k.finalValue), `v dnešných cenách ${eur(k.realValue)}`),
+          tile(ctx, "Vklady", `${eur(k.monthly)} / mes.`, k.principal > 0 ? `+ jednorazovo ${eur(k.principal)}` : `${k.years} ${rokov(k.years)} sporenia`),
+          tile(ctx, "Bez zhodnotenia", eur(k.sockValue), `výnos navyše ${eur(k.finalValue - k.sockValue)}`),
+          k.target > 0 ? tile(ctx, short ? "Na cieľ treba" : "Cieľ je splnený", short ? `${eur(k.requiredMonthly)} / mes.` : eur(k.target), `cieľ ${eur(k.target)} v dnešných cenách`) : null,
+        ])),
+        series[0].points.length >= 2 ? legendRow(series) : null,
+        series[0].points.length >= 2 ? lineChartSvg(ctx, series, 150) : null,
+        { text: `${s.strategyLabel} stratégia, výnos ${pct(k.returnPct)} ročne po nákladoch; na osi vek dieťaťa, nominálne hodnoty.`, style: "muted", margin: [0, 4, 0, 0] },
+      ])));
+    });
+    return out;
   }
 
   function renderRetirement(ctx, r) {
@@ -1448,7 +1647,7 @@
     SECTIONS.forEach((s) => {
       if (!active.includes(s.key)) return;
       // Renta a Zabezpečenie s úvodom pre klienta začínajú vždy na novej strane (úvod zaberá celú stranu).
-      const hasIntro = (s.key === "retirement" || s.key === "security") && data[s.key] && data[s.key].motivation;
+      const hasIntro = ["retirement", "security", "children"].includes(s.key) && data[s.key] && data[s.key].motivation;
       const mode = hasIntro && breaks !== "never" ? "always" : breaks;
       content.push(...h1(ctx, num++, L.modules[s.key], null, mode));
       content.push(...s.render(ctx, data[s.key]));

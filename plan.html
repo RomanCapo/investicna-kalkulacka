@@ -132,7 +132,16 @@
     .goals { grid-template-columns: repeat(6, minmax(0, 1fr)); }
     .goal { grid-column: span 2; }
     .goal:nth-child(4) { grid-column: 2 / span 2; }
+    /* S deťmi je 6 kariet — dva plné rady po troch. */
+    .goals.has-children .goal:nth-child(4) { grid-column: span 2; }
   }
+  /* Sporenie pre deti hneď za Sporením a investíciami. */
+  .goals.has-children [data-goal-card="housing"] { order: 1; }
+  .goals.has-children [data-goal-card="retirement"] { order: 2; }
+  .goals.has-children [data-goal-card="investments"] { order: 3; }
+  .goals.has-children [data-goal-card="children"] { order: 4; }
+  .goals.has-children [data-goal-card="security"] { order: 5; }
+  .goals.has-children [data-goal-card="incomeScaling"] { order: 6; }
   .goal { display: flex; flex-direction: column; padding: 24px; }
   .goal-icon { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; margin-bottom: 16px; }
   .goal-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -404,6 +413,28 @@
         </div>
       </article>
 
+      <!-- Zobrazí sa, len ak má klient v Domácnosti pridané dieťa (poradie určuje CSS order). -->
+      <article class="card goal" data-goal-card="children" aria-labelledby="goal-children" hidden>
+        <div class="goal-icon tone-b" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="8" cy="6.5" r="3"/><path d="M2.5 21v-2.5A5.5 5.5 0 0 1 8 13h1"/><circle cx="17" cy="11" r="2.5"/><path d="M12.5 21v-1.5a4.5 4.5 0 0 1 9 0V21"/></svg>
+        </div>
+        <h3 class="goal-title" id="goal-children">Sporenie pre deti</h3>
+        <p class="goal-desc">Štart do života, štúdium či prvé bývanie pre deti.</p>
+        <div class="goal-select" data-goal="children" data-placeholder="napr. 20 000 € pre Tomáša na štúdium do 18 rokov"></div>
+        <div class="goal-calcs">
+          <div class="calc" data-calc="children">
+            <div class="calc-head"><span class="calc-name">Sporenie pre deti</span><span class="chip todo" data-status>Nevyplnené</span></div>
+            <p class="calc-desc">Pravidelné investovanie do veku dieťaťa, tri stratégie, cieľová suma a cena čakania.</p>
+            <div class="metrics" data-metrics hidden></div>
+            <div data-extra></div>
+            <div class="actions">
+              <a class="goal-link" data-open href="detska-kalkulacka.html?plan=1">Otvoriť →</a>
+              <button type="button" class="btn-ghost" data-clear="children" hidden>Odstrániť z plánu</button>
+            </div>
+          </div>
+        </div>
+      </article>
+
       <article class="card goal" data-goal-card="incomeScaling" aria-labelledby="goal-income">
         <div class="goal-icon tone-a" aria-hidden="true">
           <svg viewBox="0 0 24 24"><path d="M12 20V6"/><path d="M7 11l5-5 5 5"/><path d="M5 20h14"/></svg>
@@ -571,9 +602,13 @@
   }
 
   // ------------------------------------------------------------ Ciele klienta
-  const GOAL_TITLES = { housing: "Bývanie a reality", retirement: "Renta", investments: "Sporenie a investície", security: "Zabezpečenie", incomeScaling: "Navýšenie príjmu" };
+  const GOAL_TITLES = { housing: "Bývanie a reality", retirement: "Renta", investments: "Sporenie a investície", children: "Sporenie pre deti", security: "Zabezpečenie", incomeScaling: "Navýšenie príjmu" };
 
   function renderGoals(s) {
+    // Karta Sporenie pre deti len pre klientov s deťmi v domácnosti.
+    const kids = PS.hasChildren(s);
+    $(`[data-goal-card="children"]`).hidden = !kids;
+    $("#calcs").classList.toggle("has-children", kids);
     $$("[data-goal]").forEach((box) => {
       const key = box.dataset.goal;
       const on = PS.isGoalSelected(s, key);
@@ -798,6 +833,15 @@
           [gap > 0 ? "Chýba" : "Rezerva", `${eur(Math.abs(gap))} / mes.`],
         ];
       } },
+    { key: "children", title: "Sporenie pre deti",
+      metrics: (m) => {
+        const kids = m.kids || [];
+        return [
+          ["Deti", esc(kids.map((k) => k.name || "dieťa").join(", ") || "—")],
+          ["Vklady", `${eur(kids.reduce((t, k) => t + (k.monthly || 0), 0))} / mes.`],
+          ["Spolu na konci", eur(kids.reduce((t, k) => t + (k.finalValue || 0), 0))],
+        ];
+      } },
     { key: "security", title: "Životné poistenie",
       metrics: (m) => {
         const death = (m.adult || []).find((r) => r.key === "death");
@@ -843,7 +887,7 @@
   });
 
   function renderChecklist(s) {
-    const withCalc = { retirement: true, investments: true, security: true };
+    const withCalc = { retirement: true, investments: true, security: true, children: true };
     const goals = PS.GOAL_KEYS.filter((k) => PS.isGoalSelected(s, k));
     const items = [["Parametre klienta (meno a príjem)", PS.hasProfile(s), "doplňte v kroku 1"]];
     if (!goals.length) items.push(["Ciele klienta", false, "pridajte aspoň jeden cieľ v kroku 3"]);
